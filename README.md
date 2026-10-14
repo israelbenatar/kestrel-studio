@@ -97,7 +97,7 @@ at `skill/SKILL.md`):
 | An AI coding agent that loads skills (e.g. [Claude Code](https://claude.com/claude-code)) | runs the workflow | that agent's own plan or API usage |
 | Python 3.10+ with `numpy` and `pillow` | the kit | free |
 | FFmpeg and ffprobe on the `PATH` | finish pass, stills, sync checks | free |
-| kestrel ([releases](https://github.com/israelbenatar/kestrel-studio/releases)) | rendering | free for solo builders and teams up to 10 |
+| kestrel ([releases](https://github.com/israelbenatar/kestrel-studio/releases): macOS arm64, Linux x64) | rendering | free for solo builders and teams up to 10 |
 
 **Optional, depending on the video**
 
@@ -116,7 +116,7 @@ The skill and kit never call a paid service themselves; the agent only uses the 
 
 ## Quickstart
 
-Install kestrel (macOS 13+, Apple Silicon; signed and notarized by Apple):
+Install kestrel. On macOS (13+, Apple Silicon; signed and notarized by Apple):
 
 ```sh
 curl -LO https://github.com/israelbenatar/kestrel-studio/releases/download/v0.1.0/kestrel-0.1.0-macos-arm64.tar.gz
@@ -125,6 +125,19 @@ tar -xzf kestrel-0.1.0-macos-arm64.tar.gz
 export PATH="$PWD/kestrel-0.1.0-macos-arm64/bin:$PATH"      # add to your shell profile to keep it
 kestrel --version
 ```
+
+On Linux (x64; Ubuntu 22.04+, Debian 12+):
+
+```sh
+curl -LO https://github.com/israelbenatar/kestrel-studio/releases/download/v0.1.0/kestrel-0.1.0-linux-x64.tar.gz
+curl -LO https://github.com/israelbenatar/kestrel-studio/releases/download/v0.1.0/kestrel-0.1.0-linux-x64.tar.gz.sha256 && sha256sum -c kestrel-0.1.0-linux-x64.tar.gz.sha256
+tar -xzf kestrel-0.1.0-linux-x64.tar.gz
+export PATH="$PWD/kestrel-0.1.0-linux-x64/bin:$PATH"
+kestrel-openh264      # once, for MP4: fetches Cisco's OpenH264 from Cisco (not bundled: its patent licence covers only Cisco's binary)
+```
+
+WebM, ProRes and WebP need no setup; with an NVIDIA GPU, H.264 needs none either. Needs fontconfig and
+freetype (`apt install libfontconfig1 libfreetype6`), present on most systems.
 
 Render the first example:
 
