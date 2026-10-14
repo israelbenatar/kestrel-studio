@@ -34,4 +34,5 @@ kestrel is distributed here as a compiled binary. It is built on:
 All under the [SIL Open Font License 1.1](https://openfontlicense.org): EB Garamond
 (Georg Duffner, Octavio Pardo), Inter and Inter Tight (Rasmus Andersson), Instrument Serif (Instrument),
 JetBrains Mono (JetBrains), Dancing Script (Pablo Impallari). Inter Tight and JetBrains Mono are
-static instances cut from the variable fonts with fontTools.
+static instances cut from the variable fonts with fontTools. Licence texts: `fonts/licenses/`, and
+beside every copy of a font in an example.

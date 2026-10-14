@@ -1,15 +1,16 @@
-"""Local test: the 4:5 "re-sort by asking" film, rebuilt as a Lottie scene for kestrel.
+"""Sustain feature film: the 4:5 "re-sort by asking" video, a Lottie scene for kestrel.
 
-Same storyboard as the PIL cut it is compared against (intro, three asks, each with the chat
-recording, a rebuild cut and a board of the result, outro), but with real motion: typed requests,
-per-character title reveals, cards that rise in, slow push-ins on photos.
+Intro, three asks (each with the chat recording, a rebuild cut and a board of the result), outro,
+with real motion: typed requests, per-character title reveals, cards that rise in, slow push-ins on
+photos. HyperFrames renders the intro and a transparent outro that kestrel composites.
 
     ../../.venv/bin/python build.py          # media/ + scene.json
     kestrel render scene.json -o out/raw.mp4 --fonts ../../fonts --audio $SRC/music.mp3 --fade-out 2
     ../../.venv/bin/python -m kit.finish out/raw.mp4 out/finished.mp4 --flash ...
 
-Source media stays outside the repo (MEDIA_SRC, ALBUM): the recordings and photos are not ours to
-publish.
+Showcase: the inputs (Playwright recordings of the Sustain app and the demo album's photos, whose
+people are AI-generated) live in sources/ and are not in git, so this example documents the method
+rather than rebuilding from a fresh clone.
 """
 import json
 import subprocess
@@ -23,8 +24,9 @@ sys.path.insert(0, str(HERE.parent.parent))
 from kit.lottie import Comp  # noqa: E402
 
 REC = HERE / "sources" / "recordings"
-VIDEOS = Path.home() / "dev/sustain-wt-hero-album-film/marketing/videos"
-ALBUM = VIDEOS / "occasion-templates/albums/demo-maya"
+# inputs (not in git): screen recordings of the Sustain app and its demo album's photos
+# (AI-generated people), under sources/
+ALBUM = HERE / "sources" / "album"
 FONTS = HERE.parent.parent / "fonts"
 MEDIA = HERE / "media"
 MEDIA.mkdir(exist_ok=True)

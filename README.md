@@ -122,7 +122,7 @@ kestrel render scene.json -o out/glint.mp4 --fonts ../../fonts
 |---|---|
 | `examples/glint-card` | Layer shaders and music on a beat: a card with a paper texture catching the light twice, to an ACE-Step track generated at 120 BPM; each glint and line of text lands on a beat (sync check under 1 frame). Renders in about 2.5 s. |
 | `examples/launch-linkedin` | The kestrel studio launch film for LinkedIn (4:5, 33 s), made with the skill end to end: the site's look read into `brand.json`, Playwright captures, a HyperFrames 3D unfold handed to kestrel, an ACE-Step track with every landing on a beat, and the postroll. |
-| `examples/chat-sorting` | A Sustain feature film: screen recordings of the real app, a HyperFrames intro, a transparent HyperFrames outro composited over kestrel layers, and the finish pass. |
+| `examples/chat-sorting` | *Showcase (inputs not in git).* A Sustain feature film: screen recordings of the real app, a HyperFrames intro, a transparent HyperFrames outro composited over kestrel layers, and the finish pass. |
 
 The people in the example photos are AI-generated (Flux 1.1 Pro on Replicate); no real person is
 depicted.
@@ -131,6 +131,16 @@ depicted.
 
 `site/` is the kestrel studio landing page (static HTML; serve it with `python3 -m http.server`). The
 launch example captures it.
+
+## Licence
+
+- **This repository** — the skill, the kit, the examples and the site — is licensed under the
+  [Apache License 2.0](LICENSE): use it, change it and ship it, commercially too.
+- **kestrel**, the compiled renderer in this repo's releases, is **free for solo builders and small
+  teams of up to 10 people**, commercial work included; larger organizations need a commercial
+  licence. Its own terms ship with it (`LICENSE.md` in the release archive), and the videos you
+  render are always yours.
+- **Fonts** in `fonts/` are under the SIL Open Font License 1.1 (`fonts/licenses/`).
 
 ## Credits
 
