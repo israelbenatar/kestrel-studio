@@ -129,8 +129,9 @@ depicted.
 
 ## Site
 
-`site/` is the kestrel studio landing page (static HTML; serve it with `python3 -m http.server`). The
-launch example captures it.
+`site/` is the kestrel studio landing page, live at https://israelbenatar.github.io/kestrel-studio/
+(published by `.github/workflows/pages.yml` on every push that touches it). Locally:
+`python3 -m http.server -d site`. The launch example captures it.
 
 ## Licence
 
