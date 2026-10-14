@@ -112,6 +112,9 @@ nav.top .links a:hover{background:var(--glass-fill);color:var(--ink)}
 .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
 .meta-row{display:flex;flex-wrap:wrap;gap:22px;margin-top:34px;font:500 12px var(--mono);letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
 .meta-row b{color:var(--ink);font-weight:500}
+.born{display:inline-flex;gap:6px;margin-top:22px;font-size:14.5px;color:var(--ink-2);border-bottom:1px solid rgba(255,240,225,.22);padding-bottom:2px;transition:color .2s,border-color .2s}
+.born b{color:var(--amber);font-weight:600}
+.born:hover{color:var(--ink);border-color:var(--amber)}
 
 /* studio window */
 .studio{padding:14px;--glass-radius:26px}
@@ -243,6 +246,7 @@ footer a{color:var(--ink-2);border-bottom:1px solid rgba(255,255,255,.18)}
         <a class="btn glass pill" href="#features">See what it does <span class="dot" aria-hidden="true">↓</span></a>
       </div>
       <div class="meta-row rise d4"><span><b>120</b> fps renderer</span><span><b>4</b> aspects · 1 timeline</span><span><b>0</b> mock-ups</span></div>
+      <a class="born rise d5" href="https://www.sustain-app.com">Born making the videos for <b>Sustain</b> — turn your photos into a designed album <span aria-hidden="true">↗</span></a>
     </div>
 
     <div class="studio glass rise d3" aria-label="kestrel studio at work">
@@ -251,7 +255,7 @@ footer a{color:var(--ink-2);border-bottom:1px solid rgba(255,255,255,.18)}
       <div class="preview">
         <video id="demo" autoplay muted loop playsinline poster="assets/sustain-demo.webp" aria-label="A feature film made with kestrel studio for Sustain">
           <source src="assets/sustain-demo.webm" type="video/webm"><source src="assets/sustain-demo.mp4" type="video/mp4"></video>
-        <span class="badge glass pill">● made with kestrel studio</span>
+        <a class="badge glass pill" href="https://www.sustain-app.com">● made with kestrel studio for Sustain ↗</a>
         <button class="sound glass pill" id="sound" type="button" aria-pressed="false">♪ sound off</button>
       </div>
       <div class="timeline glass">
