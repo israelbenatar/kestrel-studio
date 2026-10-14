@@ -1,5 +1,12 @@
 # kestrel-studio
 
+<p align="center">
+  <a href="https://israelbenatar.github.io/kestrel-studio/assets/launch.mp4"><img src="site/assets/launch-preview.webp" width="360" alt="The kestrel studio launch film: a prompt is typed, the landing page unfolds in 3D, the real product plays on the beat"></a>
+  <br>
+  <sub><b>Proof of concept: this launch film was made with kestrel studio</b> and its skill, end to end.<br>
+  <a href="https://israelbenatar.github.io/kestrel-studio/assets/launch.mp4">▶ Watch the full 33 s with sound</a> · <a href="examples/launch-linkedin">How it was built</a> · <a href="https://israelbenatar.github.io/kestrel-studio/">The site</a></sub>
+</p>
+
 Marketing & social videos, written as code. Product promos, feature demos, social clips and site
 heroes are a program that draws every frame, not a generated video, so a fix is an edit and a
 re-render, not a reroll.
@@ -90,7 +97,7 @@ at `skill/SKILL.md`):
 | An AI coding agent that loads skills (e.g. [Claude Code](https://claude.com/claude-code)) | runs the workflow | that agent's own plan or API usage |
 | Python 3.10+ with `numpy` and `pillow` | the kit | free |
 | FFmpeg and ffprobe on the `PATH` | finish pass, stills, sync checks | free |
-| kestrel (from this repo's releases) | rendering | free |
+| kestrel ([releases](https://github.com/israelbenatar/kestrel-studio/releases)) | rendering | free for solo builders and teams up to 10 |
 
 **Optional, depending on the video**
 
@@ -109,12 +116,28 @@ The skill and kit never call a paid service themselves; the agent only uses the 
 
 ## Quickstart
 
+Install kestrel (macOS 13+, Apple Silicon; signed and notarized by Apple):
+
 ```sh
+curl -LO https://github.com/israelbenatar/kestrel-studio/releases/download/v0.1.0/kestrel-0.1.0-macos-arm64.tar.gz
+curl -LO https://github.com/israelbenatar/kestrel-studio/releases/download/v0.1.0/kestrel-0.1.0-macos-arm64.tar.gz.sha256 && shasum -a 256 -c kestrel-0.1.0-macos-arm64.tar.gz.sha256
+tar -xzf kestrel-0.1.0-macos-arm64.tar.gz
+export PATH="$PWD/kestrel-0.1.0-macos-arm64/bin:$PATH"      # add to your shell profile to keep it
+kestrel --version
+```
+
+Render the first example:
+
+```sh
+git clone https://github.com/israelbenatar/kestrel-studio && cd kestrel-studio
 python3 -m venv .venv && .venv/bin/pip install numpy pillow
 cd examples/glint-card
 ../../.venv/bin/python build.py                       # writes scene.json
 kestrel render scene.json -o out/glint.mp4 --fonts ../../fonts
 ```
+
+Then give your agent the skill: copy `skill/` to `~/.claude/skills/kestrel-video/` (Claude Code), or
+point any agent at `skill/SKILL.md`, and ask for a video.
 
 ## Examples
 
