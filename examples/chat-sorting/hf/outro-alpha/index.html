@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1350" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "EB Garamond"; src: url(assets/EBGaramond-Regular.ttf); }
+      @font-face { font-family: "Inter"; src: url(assets/Inter-Regular.ttf); font-weight: 400; }
+      @font-face { font-family: "Inter"; src: url(assets/Inter-Bold.ttf); font-weight: 700; }
+      @font-face { font-family: "Dancing Script"; src: url(assets/DancingScript-Bold.ttf); font-weight: 700; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1350px; overflow: hidden; background: transparent; }
+      #root { position: relative; width: 1080px; height: 1350px; overflow: hidden;
+        background: transparent; }   /* transparent: kestrel draws what is behind */
+      #glow { position: absolute; left: 240px; top: 560px; width: 600px; height: 440px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(197, 160, 53, .32), rgba(176, 122, 100, .10) 60%, transparent); filter: blur(10px); }
+      #title { position: absolute; left: 0; width: 100%; top: 300px; text-align: center; font-family: "EB Garamond", serif;
+        font-size: 120px; line-height: 1; color: #2D3436; }
+      #lede { position: absolute; left: 0; width: 100%; top: 450px; text-align: center; font-family: "Inter", sans-serif;
+        font-size: 32px; line-height: 1.45; color: #6E6862; }
+      #mark { position: absolute; left: 0; width: 100%; top: 700px; text-align: center; font-family: "Dancing Script", cursive;
+        font-weight: 700; font-size: 150px; line-height: 1; color: #B07A64; }
+      #url { position: absolute; left: 0; width: 100%; top: 900px; text-align: center; font-family: "Inter", sans-serif;
+        font-size: 32px; color: #2D3436; letter-spacing: .02em; }
+      /* the chapters from all three sorts gather around the wordmark: glass chips */
+      .chip { position: absolute; padding: 14px 24px; border-radius: 999px; white-space: nowrap;
+        font-family: "Inter", sans-serif; font-weight: 700; font-size: 26px; color: #2D3436;
+        background: rgba(255, 252, 246, .62); border: 1px solid rgba(176, 122, 100, .35);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 10px 28px rgba(60, 40, 30, .14); will-change: transform, opacity; }
+      .chip i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #B07A64;
+        margin-right: 12px; vertical-align: 2px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="3.2" data-width="1080" data-height="1350">
+      <div id="panel" class="clip" data-start="0" data-duration="3.2" data-track-index="0" style="position:absolute;left:40px;right:40px;top:230px;height:930px;border-radius:48px;background:radial-gradient(closest-side,rgba(250,246,239,.97),rgba(250,246,239,.9) 70%,rgba(250,246,239,0))"></div>
+      <div id="glow" class="clip" data-start="0" data-duration="3.2" data-track-index="0"></div>
+      <div id="chips" class="clip" data-start="0" data-duration="3.2" data-track-index="1">
+        <div class="chip" id="c1" style="left:80px;top:640px"><i></i>Summers by the Sea</div>
+        <div class="chip" id="c2" style="left:690px;top:610px"><i></i>Snow Days</div>
+        <div class="chip" id="c3" style="left:60px;top:860px"><i></i>2009 · Paris</div>
+        <div class="chip" id="c4" style="left:700px;top:880px"><i></i>Birthday Wishes</div>
+        <div class="chip" id="c5" style="left:160px;top:1040px"><i></i>Travels</div>
+        <div class="chip" id="c6" style="left:560px;top:1060px"><i></i>Postcards from Abroad</div>
+      </div>
+      <div id="title" class="clip" data-start="0" data-duration="3.2" data-track-index="2">Just ask.</div>
+      <div id="lede" class="clip" data-start="0" data-duration="3.2" data-track-index="3">By date, by theme, or your own chapters —<br />the chat re-sorts the whole album for you.</div>
+      <div id="mark" class="clip" data-start="0" data-duration="3.2" data-track-index="4">Sustain</div>
+      <div id="url" class="clip" data-start="0" data-duration="3.2" data-track-index="5">sustain-app.com</div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#panel", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, 0);
+      tl.fromTo("#title", { opacity: 0, y: 30, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8, ease: "power3.out" }, 0.05);
+      tl.fromTo("#lede", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.45);
+      // finale: chips fly in from the frame edges toward the mark, overshoot slightly, settle
+      const from = { c1: [-420, -60], c2: [420, -90], c3: [-460, 40], c4: [440, 60], c5: [-260, 320], c6: [300, 300] };
+      Object.entries(from).forEach(([id, [dx, dy]], i) => {
+        tl.fromTo("#" + id, { x: dx, y: dy, opacity: 0, rotation: dx > 0 ? 8 : -8, scale: 0.8 },
+          { x: 0, y: 0, opacity: 1, rotation: 0, scale: 1, duration: 0.75, ease: "back.out(1.6)" }, 0.75 + i * 0.07);
+        tl.to("#" + id, { y: (i % 2 ? -1 : 1) * 10, duration: 1.4, ease: "sine.inOut" }, 1.6);   // gentle float
+      });
+      tl.fromTo("#glow", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 1.0, ease: "power2.out" }, 0.9);
+      tl.fromTo("#mark", { opacity: 0, scale: 0.86, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.8, ease: "back.out(1.4)" }, 1.05);
+      tl.fromTo("#url", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 1.5);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

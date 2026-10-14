@@ -1,0 +1,16 @@
+__pycache__/
+.venv/
+examples/*/*.json
+examples/*/cuts.json
+examples/*/media/
+examples/*/out/
+examples/*/scene.json
+examples/*/sources/
+.DS_Store
+# HyperFrames renders, snapshots and local state: build outputs, not sources
+examples/*/hf/*.mp4
+examples/*/hf/*.mov
+examples/*/hf/*.png
+examples/*/hf/*/.hyperframes/
+# photos are media (served from the CDN), not source
+examples/*/hf/*/assets/*.jpg
