@@ -1,8 +1,8 @@
 # kestrel-studio
 
-Motion videos as code: product promos, feature demos, social clips and site heroes, written as a
-program that draws every frame rather than generated as a video. A fix is an edit and a re-render,
-not a reroll.
+Marketing & social videos, written as code. Product promos, feature demos, social clips and site
+heroes are a program that draws every frame, not a generated video, so a fix is an edit and a
+re-render, not a reroll.
 
 It is three things:
 
@@ -121,10 +121,16 @@ kestrel render scene.json -o out/glint.mp4 --fonts ../../fonts
 | Example | What it shows |
 |---|---|
 | `examples/glint-card` | Layer shaders and music on a beat: a card with a paper texture catching the light twice, to an ACE-Step track generated at 120 BPM; each glint and line of text lands on a beat (sync check under 1 frame). Renders in about 2.5 s. |
+| `examples/launch-linkedin` | The kestrel studio launch film for LinkedIn (4:5, 33 s), made with the skill end to end: the site's look read into `brand.json`, Playwright captures, a HyperFrames 3D unfold handed to kestrel, an ACE-Step track with every landing on a beat, and the postroll. |
 | `examples/chat-sorting` | A Sustain feature film: screen recordings of the real app, a HyperFrames intro, a transparent HyperFrames outro composited over kestrel layers, and the finish pass. |
 
 The people in the example photos are AI-generated (Flux 1.1 Pro on Replicate); no real person is
 depicted.
+
+## Site
+
+`site/` is the kestrel studio landing page (static HTML; serve it with `python3 -m http.server`). The
+launch example captures it.
 
 ## Credits
 

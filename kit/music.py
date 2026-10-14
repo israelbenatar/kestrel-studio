@@ -28,7 +28,7 @@ import argparse
 import json
 import os
 import time
-import urllib.parse
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -39,8 +39,15 @@ REPLICATE_VERSION = "74e3a7d383b18815e277de5223f5fe9d53d38832de15aa567fe729fa129
 def _post(path: str, body: dict, server: str, headers: dict | None = None) -> dict:
     req = urllib.request.Request(server + path, json.dumps(body).encode(),
                                  {"Content-Type": "application/json", **(headers or {})})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.load(r)
+    for attempt in range(6):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.load(r)
+        except urllib.error.HTTPError as e:
+            # Replicate rate-limits low-credit accounts to a few predictions a minute: wait it out
+            if e.code != 429 or attempt == 5:
+                raise
+            time.sleep(float(e.headers.get("Retry-After") or 10 * (attempt + 1)))
 
 
 def generate_replicate(prompt: str, *, bpm: int, duration: float, seed: int, out_dir: Path,

@@ -14,3 +14,9 @@ examples/*/hf/*.png
 examples/*/hf/*/.hyperframes/
 # photos are media (served from the CDN), not source
 examples/*/hf/*/assets/*.jpg
+examples/*/node_modules
+# launch example: captures, HyperFrames assets and the rendered postroll are rebuilt by the pipeline
+examples/*/assets/captures/
+examples/*/hf/*/assets/*.png
+examples/*/brand/*.mp4
+examples/*/brand/postroll.json

@@ -1,0 +1,32 @@
+{
+ "source": "http://localhost:8765",
+ "palette": {
+  "background": "#0E0F13",
+  "ink": "#F2EEE8",
+  "ink2": "#BDB6AC",
+  "muted": "#8A847C",
+  "accent": "#E8743B",
+  "accent2": "#F5B544",
+  "counter": "#7F9CFF",
+  "cream": "#F6E7CF"
+ },
+ "gradient": "linear-gradient(100deg,#F5B544,#E8743B 55%,#D9534F)",
+ "type": {
+  "display": "Inter Tight",
+  "displayWeight": "600",
+  "accent": "Instrument Serif",
+  "accentStyle": "italic",
+  "body": "Inter Tight",
+  "mono": "JetBrains Mono"
+ },
+ "glass": {
+  "fill": [
+   "rgba(255,246,236,.11)",
+   "rgba(255,246,236,.04)"
+  ],
+  "edge": "rgba(255,240,225,.24)",
+  "highlight": "rgba(255,255,255,.30)",
+  "blur": "22px",
+  "radius": "22px"
+ }
+}
