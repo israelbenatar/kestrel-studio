@@ -74,7 +74,7 @@ ww = measure("a week.", SANS, 96) * 0.975
 strike = c.rect(90, 660, ww, 9, RUF, radius=4, ip=2.0, op=4.0, pivot="origin", fade_out=(3.7, 4.0), name="strike")
 strike["ks"]["s"] = c.keys((2.0, [0, 100, 100]), (2.3, [100, 100, 100]))
 week["ks"]["o"] = c.keys((1.5, 0), (1.85, 100), (2.3, 100), (2.5, 38), (3.7, 38), (4.0, 0))
-c.text("a prompt.", font=SERIF, size=150, x=86, y=900, color=AMB, ip=2.5, op=4.0,
+c.text("a conversation.", font=SERIF, size=150, x=86, y=900, color=AMB, ip=2.5, op=4.0,
        fade=(2.5, 2.8), rise=36, spring=True, fade_out=(3.7, 4.0))
 
 # ---------------------------------------------------------------- 3–4 · 4.0–12.0  HyperFrames: prompt, 3D unfold
