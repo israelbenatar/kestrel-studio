@@ -16,7 +16,7 @@ Repo layout this skill assumes (`$KIT` = the repo root):
 |---|---|
 | `kit/lottie.py` | Lottie scene builder for kestrel: text (reveal, typewriter), images, clips, shapes, fades, rises, springs, slow zooms. Seconds and pixels. |
 | `kit/finish.py` | Film finish post-pass: grade, glow, light leak (swells on cuts), grain, vignette. |
-| `kit/shaders.py` | Ready-made SkSL layer shaders for `Comp.shader()`: `GLINT` (a sweep of light), `PAPER` (fibre texture). |
+| `kit/shaders.py` | Ready-made SkSL layer shaders for `Comp.shader()`: `GLINT` (a sweep of light), `PAPER` (fibre texture), `LIGHTS` (stage lights: darkness, moving spotlights, a rim from the layer's alpha). |
 | `kit/music.py` | Music from a prompt with ACE-Step 1.5, locally or on Replicate, at a BPM and key you choose (§6). |
 | `kit/beats.py` | Beat grid of a track (tempo, beat one, strongest hits) and the post-render sync check (§6). |
 | `kestrel` | The renderer binary (Lottie/Bodymovin → MP4 / ProRes / PNG). |
@@ -231,6 +231,17 @@ c.shader(card, PAPER, {"uScale": 2.0, "uAmount": 0.12, "uSeed": 3.0})
 c.shader(card, GLINT, {"uSize": [640, 400], "uWidth": 0.06, "uGain": 0.55,
                        "uPos": c.keys((0.7, -0.3), (1.6, 1.3), ease=EASE_IN_OUT)})   # animate a uniform
 ```
+**Revealing a subject from darkness — `LIGHTS`.** Put the subject on a transparent clip (a ProRes
+4444 / WebM-alpha capture, a cut-out PNG) over a near-black solid and give it `LIGHTS`: three soft
+spotlights (`uSpotA/B/C` = x, y, radius, gain — animate them along paths), an ambient level, and a
+rim light computed from the clip's own alpha (`uRim` direction, width, gain; `uRimAt` keeps it on
+one side, the way a real rim light falls). Let the silhouette arrive first (rim), sweep a key
+across to find the face, then let it fall away. Route searchlights *around* the subject — a spot
+on a shirt reads as a torch, not a light. A web page's WebGL canvas usually renders with
+transparency: hide the page's HTML with injected CSS, screenshot with `omitBackground`, and drive
+the page with Playwright's fake clock (`page.clock.install()`, `runFor(1000 / fps)` per frame) for
+a deterministic, full-quality capture with alpha.
+
 Writing your own: `uniform shader content;` is the layer's pixels (`content.eval(p)`); return
 premultiplied colour (keep rgb ≤ alpha). What the helper handles, learned the hard way:
 - **`p` is in composition pixels**, not the layer's. `shader()` supplies `kOrigin[2]`, the layer's

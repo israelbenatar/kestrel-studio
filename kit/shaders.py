@@ -56,3 +56,43 @@ half4 main(float2 p) {
   float shade = 1.0 - uAmount[0] * (fibre * 0.8 + mottle * 0.6 - 0.5);
   return half4(c.rgb * half(shade), c.a);
 }"""
+
+# Stage lights: the layer sits in darkness and only what the lights reach shows — three soft
+# spotlights you move by animating their uniforms, plus a rim light built from the layer's own
+# alpha (edges that face the light glow), so a cut-out subject (a transparent ProRes/WebM clip,
+# a PNG) gets a silhouette before its face. Coordinates are layer pixels.
+#   uSpotA[4], uSpotB[4], uSpotC[4]   x, y, radius, gain (gain 0 = off; 1 = full exposure at centre)
+#   uTint[3]     colour of the spotlights (1,1,1 neutral; warm it slightly for skin)
+#   uAmbient[1]  light everywhere (0 = black outside the spots)
+#   uRim[4]      direction x, y (toward the light, any length), width in px, gain
+#   uRimAt[3]    x, y, radius: where the rim light falls (a rim lights one side of a subject, not all
+#                of its outline); use a huge radius for everywhere
+#   uRimColor[3] rim colour (linear 0..1)
+LIGHTS = """uniform shader content;
+uniform float uSpotA[4];
+uniform float uSpotB[4];
+uniform float uSpotC[4];
+uniform float uTint[3];
+uniform float uAmbient[1];
+uniform float uRim[4];
+uniform float uRimAt[3];
+uniform float uRimColor[3];
+half4 main(float2 p) {
+  half4 c = content.eval(p);
+  float2 q = p - float2(kOrigin[0], kOrigin[1]);
+  float l = uAmbient[0];
+  float2 d = q - float2(uSpotA[0], uSpotA[1]); l += uSpotA[3] * exp(-dot(d, d) / max(uSpotA[2] * uSpotA[2], 1.0));
+  d = q - float2(uSpotB[0], uSpotB[1]);        l += uSpotB[3] * exp(-dot(d, d) / max(uSpotB[2] * uSpotB[2], 1.0));
+  d = q - float2(uSpotC[0], uSpotC[1]);        l += uSpotC[3] * exp(-dot(d, d) / max(uSpotC[2] * uSpotC[2], 1.0));
+  // rim: opaque here, transparent toward the light; three taps give a soft falloff into the subject
+  float2 dir = normalize(float2(uRim[0], uRim[1]) + float2(1e-5, 0.0));
+  float open = 0.0;
+  open += 1.0 - content.eval(p + dir * uRim[2] * 0.35).a;
+  open += 1.0 - content.eval(p + dir * uRim[2] * 0.7).a;
+  open += 1.0 - content.eval(p + dir * uRim[2]).a;
+  float2 r = q - float2(uRimAt[0], uRimAt[1]);
+  float rim = float(c.a) * (open / 3.0) * uRim[3] * exp(-dot(r, r) / max(uRimAt[2] * uRimAt[2], 1.0));
+  half3 rgb = c.rgb * half(l) * half3(uTint[0], uTint[1], uTint[2])
+            + half3(uRimColor[0], uRimColor[1], uRimColor[2]) * half(rim) * c.a;
+  return half4(min(rgb, half3(c.a)), c.a);
+}"""

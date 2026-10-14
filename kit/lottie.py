@@ -199,7 +199,7 @@ class Comp:
     def text(self, text, *, font, size, x, y, color="#000000", align="left", ip=0, op=None, tracking=0,
              line_height=None, reveal=None, typewriter=None, name=None, **motion):
         """Point text; *y* is the first baseline. Lines break at '\\n'.
-        reveal=(t0, t1): characters rise and fade in, in reading order.
+        reveal=(t0, t1): characters rise and fade in, in reading order (right to left for Hebrew/Arabic).
         typewriter=(t0, t1): the text types itself out."""
         self._font(font)
         j = {"left": 0, "right": 1, "center": 2}[align]
@@ -213,9 +213,13 @@ class Comp:
         animators = []
         if reveal:
             t0, t1 = reveal
+            # the selector covers the still-hidden characters; Skottie numbers them in visual order, so
+            # right-to-left text (Hebrew, Arabic) shrinks the range from the other end to reveal in reading order
+            rtl = any("\u0590" <= ch <= "\u08ff" for ch in text)
+            start = static(0) if rtl else self.keys((t0, 0), (t1, 100), ease=EASE_IN_OUT)
+            end = self.keys((t0, 100), (t1, 0), ease=EASE_IN_OUT) if rtl else static(100)
             animators.append({"nm": "Reveal", "s": {"t": 0, "xe": static(0), "ne": static(0), "a": static(100), "b": 1,
-                                                    "rn": 0, "sh": 1, "r": 1, "e": static(100), "o": static(0),
-                                                    "s": self.keys((t0, 0), (t1, 100), ease=EASE_IN_OUT)},
+                                                    "rn": 0, "sh": 1, "r": 1, "e": end, "o": static(0), "s": start},
                               "a": {"p": static([0, size * 0.45, 0]), "o": static(0)}})
         ks = self._motion(x, y, 0, 0, ip=ip, pivot="origin", **motion)
         return self._layer(5, name or text[:24], ip, op, ks,
