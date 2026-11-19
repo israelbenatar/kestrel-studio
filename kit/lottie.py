@@ -54,6 +54,7 @@ class Comp:
         self.assets: list[dict] = []
         self.fonts: dict[str, dict] = {}
         self._asset_ids: dict[str, str] = {}
+        self._precomps: list[tuple[str, Comp]] = []     # shared with every precomp made from this comp
 
     # ---------- time & keyframes ----------
     def f(self, t: float) -> float:
@@ -196,11 +197,28 @@ class Comp:
         layer["st"] = self.f(start)
         return layer
 
+    def precomp(self, x, y, w, h, *, radius=0, ip=0, op=None, name="group", **motion) -> "Comp":
+        """A w x h sub-scene placed at (x, y), clipped to its own box (and to *radius*). Returns a
+        Comp: add layers to it in its own pixels (0..w, 0..h) and on the same clock (comp seconds).
+        Use it to move or zoom something inside a card without it spilling out (kit.camera)."""
+        sub = Comp(w, h, fps=self.fps, duration=self.duration, name=name)
+        sub.assets, sub.fonts, sub._asset_ids, sub._precomps = self.assets, self.fonts, self._asset_ids, self._precomps
+        aid = f"comp_{len(self._precomps)}"
+        self._precomps.append((aid, sub))
+        ks = self._motion(x, y, w, h, ip=ip, **motion)
+        extra = {"refId": aid, "w": w, "h": h}
+        if radius:
+            extra.update(hasMask=True, masksProperties=[{"nm": "Round", "mode": "a", "inv": False, "o": static(100),
+                                                         "x": static(0), "pt": static(rounded_rect_path(w, h, radius))}])
+        self._layer(0, name, ip, op, ks, **extra)
+        return sub
+
     def text(self, text, *, font, size, x, y, color="#000000", align="left", ip=0, op=None, tracking=0,
-             line_height=None, reveal=None, typewriter=None, name=None, **motion):
+             line_height=None, reveal=None, typewriter=None, name=None, decor=False, **motion):
         """Point text; *y* is the first baseline. Lines break at '\\n'.
         reveal=(t0, t1): characters rise and fade in, in reading order (right to left for Hebrew/Arabic).
-        typewriter=(t0, t1): the text types itself out."""
+        typewriter=(t0, t1): the text types itself out.
+        decor=True: the viewer is not meant to read it, so kit.check skips its size and contrast rules."""
         self._font(font)
         j = {"left": 0, "right": 1, "center": 2}[align]
         doc = {"s": size, "f": font, "t": text.replace("\n", "\r"), "j": j, "tr": tracking,
@@ -222,8 +240,9 @@ class Comp:
                                                     "rn": 0, "sh": 1, "r": 1, "e": end, "o": static(0), "s": start},
                               "a": {"p": static([0, size * 0.45, 0]), "o": static(0)}})
         ks = self._motion(x, y, 0, 0, ip=ip, pivot="origin", **motion)
+        extra = {"cl": "decor"} if decor else {}
         return self._layer(5, name or text[:24], ip, op, ks,
-                           t={"d": tdoc, "p": {}, "m": {"g": 1, "a": static([0, 0])}, "a": animators})
+                           t={"d": tdoc, "p": {}, "m": {"g": 1, "a": static([0, 0])}, "a": animators}, **extra)
 
     # ---------- shaders ----------
     def shader(self, layer: dict, code: str, uniforms: dict | None = None, *, content: bool = True,
@@ -265,13 +284,17 @@ class Comp:
         return layer
 
     # ---------- output ----------
-    def to_dict(self) -> dict:
+    def _ordered(self) -> list[dict]:
         layers = list(reversed(self.layers))
         for n, layer in enumerate(layers):
             layer["ind"] = n + 1
+        return layers
+
+    def to_dict(self) -> dict:
+        assets = self.assets + [{"id": aid, "nm": sub.name, "layers": sub._ordered()} for aid, sub in self._precomps]
         return {"v": "5.7.4", "fr": self.fps, "ip": 0, "op": self.f(self.duration), "w": self.w, "h": self.h,
-                "nm": self.name, "ddd": 0, "assets": self.assets,
-                "fonts": {"list": list(self.fonts.values())}, "layers": layers}
+                "nm": self.name, "ddd": 0, "assets": assets,
+                "fonts": {"list": list(self.fonts.values())}, "layers": self._ordered()}
 
     def save(self, path) -> Path:
         p = Path(path)

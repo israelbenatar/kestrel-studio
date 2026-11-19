@@ -14,11 +14,16 @@ Repo layout this skill assumes (`$KIT` = the repo root):
 
 | Path | What |
 |---|---|
-| `kit/lottie.py` | Lottie scene builder for kestrel: text (reveal, typewriter), images, clips, shapes, fades, rises, springs, slow zooms. Seconds and pixels. |
+| `kit/lottie.py` | Lottie scene builder for kestrel: text (reveal, typewriter), images, clips, shapes, fades, rises, springs, slow zooms, precomps (a clipped card with its own layers). Seconds and pixels. |
 | `kit/finish.py` | Film finish post-pass: grade, glow, light leak (swells on cuts), grain, vignette. |
 | `kit/shaders.py` | Ready-made SkSL layer shaders for `Comp.shader()`: `GLINT` (a sweep of light), `PAPER` (fibre texture), `LIGHTS` (stage lights: darkness, moving spotlights, a rim from the layer's alpha). |
 | `kit/music.py` | Music from a prompt with ACE-Step 1.5, locally or on Replicate, at a BPM and key you choose (§6). |
 | `kit/beats.py` | Beat grid of a track (tempo, beat one, strongest hits) and the post-render sync check (§6). |
+| `kit/capture.cjs` | Focus log for a Playwright capture: which element is the subject, and when (§3). |
+| `kit/camera.py` | Frames a capture on its focus log: smooth push-ins and pull-backs inside a card (§3). |
+| `kit/waits.py` | Measures where a capture's picture changes; plays waits fast, cuts still ones (§3). |
+| `kit/check.py` | The delivery checks code can measure: text height, safe area, contrast on the frames (§8). |
+| `skill/LEDGER.md` | Every mistake found in a delivered video, with the check that now catches it (§8). |
 | `kestrel` | The renderer binary (Lottie/Bodymovin → MP4 / ProRes / PNG). |
 | `fonts/` | Open-licensed fonts, referenced by file stem. |
 | `examples/` | Worked scenes. Clone the closest one instead of starting blank. |
@@ -61,10 +66,17 @@ cards. A promo usually follows a four-part **energy arc**:
 Keep big, frame-wide impacts rare (≤3 per film) and put them on the music's strongest hits (§6).
 Write the state list to `STORYBOARD.md` and get it approved before building frames.
 
+**Describe media before you make it.** Where a beat needs footage, a capture, a photo or a
+generated image, write it in the storyboard as a one-sentence To do the user can judge without
+seeing it ("Capture: the chat re-sorting the album by date, from the typed request to the new
+first page, ~4 s"). Make, record or generate only the ones the user approves. Fewer, stronger
+shots beat a full list; leave out anything that is only decoration.
+
 ## 3. Show the real thing
 
-Truthful screens sell; mocked UI reads as fake. Use real data and real photos, and cut waiting
-rather than faking speed (speed a recording up 8–10× through a spinner, keep typing at 1×).
+Truthful screens sell; mocked UI reads as fake. Use real data and real photos, and shorten waiting
+rather than faking speed: play a wait fast when something visibly happens in it, cut it when only a
+spinner turns, keep typing at 1× (`kit/waits.py`, below).
 
 **Capture the product with a script, not by hand**, so a capture can be re-taken after a UI change
 and comes out identical:
@@ -81,6 +93,36 @@ and comes out identical:
   serves. The build reads captures from there; nothing is pulled from a browser by hand.
 - Crop each capture to the panel that matters before it goes into a layer, and record at least the
   output's pixel size so nothing is upscaled.
+
+**Frame the capture on what the viewer should look at.** The capture script knows where every
+element is, so let it say so: `kit/capture.cjs` writes a focus log beside the capture
+(`log.focus(locator, 'reply')` when the reply becomes the subject, `log.follow()` while it streams
+in, `log.wide()` for the overview, `log.mark('typed')` for events). `kit/camera.py` turns that log
+into the camera inside a card (`screen(c, video, load(log), x, y, w, h, start=, ip=, op=)`):
+- One subject at a time: the pane, card or passage being used or read, whole, with its own title
+  and controls, not the window around it. Text the viewer must read fills the frame enough to read
+  at the video's size.
+- Each change of subject is one smooth move (about 0.9 s, easing in and out) that starts as the
+  subject comes up. Each frame holds at least 2 s; subjects that come faster share one frame wide
+  enough for them all. Small changes don't move the camera. A zoom out is as smooth as a zoom in.
+- The picture always fills the card, and never zooms past what the capture can show sharply
+  (`max_scale`, default 2 output pixels per recorded pixel; record bigger if a subject needs more).
+Print the shots `screen()` returns and look at the stills mid-move too: nothing the viewer needs a
+moment later may be cut off by the frame.
+
+**Play waits fast; cut the ones where nothing happens.** A wait the viewer should feel (a reply
+streaming in, a page filling, a build log) plays fast; a cut would make it look instant. Have the
+capture script mark where each wait starts and where its result appears, then
+`python -m kit.waits capture.webm --wait t0:t1 --keep a:b -o clip.mp4`:
+- each wait plays in about 2–5 s whatever its real length (a long render runs faster than a short
+  install); short still gaps play fast with the movement around them, so time is seen to pass,
+  while still stretches longer than 8 s (only a spinner or a caret turning) are cut, and so is
+  any piece that would flash by in under half a second;
+- the result arrives at 1×, typing stays at 1×, and the clip is silent: lay music and foley in the
+  build, never the sped-up sound;
+- `kit.waits.remap(pieces, t)` turns recording seconds into clip seconds; pass it to
+  `camera.screen(timemap=...)` and use it to place beats on the re-timed clip.
+Run it without `--wait` first to see how much the picture changes, second by second.
 Anything AI-generated (people, scenes) must be fit for the claim it sits under — a photo captioned
 "Paris" must show Paris.
 
@@ -275,20 +317,32 @@ vignette. Defaults are deliberately subtle (`--leak 0.16 --glow 0.08 --grain 5 -
 ## 8. Review — the critique loop
 
 Don't trust a render you haven't looked at.
+0. **Run the measured checks first:** `python -m kit.check scene.json --video out/final.mp4`
+   (text height, safe area, contrast on the frames) and `python -m kit.beats` for sync. What code
+   can measure is not scored by eye. Fix what fails, or mark text that nobody has to read
+   `decor=True`, and say which.
 1. Render stills at every state change (`kestrel render --frame N`, or `ffmpeg -ss t -frames:v 1`)
-   and tile them: `ffmpeg -pattern_type glob -i 'f*.png' -vf "scale=360:-1,tile=4x2" sheet.png`.
+   and tile them: `ffmpeg -i 'f%d.png' -vf "scale=360:-1,tile=4x2" sheet.png` (name the stills
+   1, 2, 3… in time order: a glob sorts `f12` before `f3`).
 2. **Score each beat 1–10** against: storyboard match, legibility, hierarchy, motion quality,
    brand fit, truthfulness. Write down the **three worst problems**, fix them, re-render.
 3. Repeat until every beat scores **8+**.
 4. Look at frames **at full size** for small things: glints, grain, text edges, crop seams.
 5. Joined clips: measure the seam (`ffmpeg -lavfi psnr`; ~40 dB is seamless).
+6. **Every mistake the user finds goes in `skill/LEDGER.md`**, with the check that catches it next
+   time: a rule in `kit/check.py` when code can measure it, otherwise a line in this skill. Before
+   delivery, read the ledger and run every check it lists. A mistake fixed once and not written
+   down comes back.
 
 **Final checklist before delivery**
 - Every product claim on screen is true and shown, not just said.
 - Every feature the brief named appears; the storyboard is matched beat for beat.
-- **Text height ≥ 5% of frame height** for anything a viewer must read on a phone (at 1350 px tall,
-  ~68 px; small labels are fine only if they're decoration).
-- Captions sit inside the platform's safe area (9:16: nothing important below ~82% height).
+- **Text size** (`kit.check`): the main line of each beat ≥ 5% of frame height (at 1350 px tall,
+  ~68 px); anything else a viewer must read ≥ 3% (~40 px); smaller only as decoration.
+- **Contrast** (`kit.check --video`): text ≥ 3:1 against the brightest or busiest picture behind
+  it, measured after the finish pass. Below that: a backing panel, a soft shade, or move it.
+- Text and captions sit inside the platform's safe area (`kit.check`; 9:16: nothing important
+  below ~82% height or in the right-hand button rail).
 - Paired frames show the identical object; no blank video slots; no cut-off faces.
 - Audio: no clipping, music fades out, sync check passed; a music-free cut exists.
 - Each aspect re-laid, not cropped; each language re-timed to its own VO.
@@ -332,6 +386,33 @@ last seconds of any clip, and each new video costs nothing to close.
 Aspect: re-lay per aspect from the same timeline (side by side in landscape, stacked in portrait).
 Language: regenerate the VO and re-sync durations; text layers take RTL replacements. Keep each
 variant's project a clone (`rsync -a --exclude renders --exclude node_modules`).
+
+Cut-downs (a 15 s clip from a 45 s film, a short per feature): pick beats a stranger understands
+from their first second, with no "as you saw" or a name the cut never introduced. Open on the
+strongest beat (the hook first, the setup only if it is needed), end on its payoff rather than
+on the lead-in to the next beat, and close with the postroll. Fewer strong cut-downs beat filling
+a count with weak ones; don't pad a cut-down to reach a length.
+
+## 11. House styles on top of this skill
+
+This skill stays brand-free. A brand's or an editor's own way of doing things lives in a **style
+skill** that extends this one instead of copying it, so later fixes here still reach it:
+
+```markdown
+---
+name: acme-video
+description: Acme's house style for marketing videos. Use for any Acme video, reel or promo.
+extends: kestrel-video
+---
+Follow /kestrel-video, with these changes:
+- §1: brand.json is acme/brand/brand.json; never re-read the site.
+- §3, the camera: hold each frame 3 s, not 2; Acme's UI is dense.
+- §6: always 112 BPM; the sound logo is acme/brand/sting.wav.
+```
+
+Read the skills a style extends first, in the order named, then the style; where they differ, the
+style wins. Write in the style only what differs, beside the step it changes. What suits every
+video belongs here; what is one brand's or one editor's taste belongs in its style.
 
 ## Do / Don't
 

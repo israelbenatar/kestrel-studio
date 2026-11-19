@@ -1,0 +1,16 @@
+{
+ "_note": "Written by hand from frames of chat-sorting/sources/recordings/date.webm: that capture was recorded before kit/capture.cjs existed. A new capture writes this file itself (log.focus / log.wide / log.save). Boxes are viewport CSS pixels, times recording seconds.",
+ "viewport": [1440, 900],
+ "video": [1440, 900],
+ "events": [
+  [12.2, "chat panel", [1044, 390, 380, 490]],
+  [40.0, "progress", [1060, 596, 350, 136]],
+  [115.3, "result", null]
+ ],
+ "marks": [
+  [11.555, "typed"],
+  [33.604, "first-reply"],
+  [37.114, "confirmed"],
+  [115.2, "reloaded"]
+ ]
+}
