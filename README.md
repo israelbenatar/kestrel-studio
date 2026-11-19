@@ -17,8 +17,10 @@ It is three things:
   framing, state list, real media, engine choice, sound on a beat grid, shaders and a film finish,
   a render–review–fix loop, delivery formats and a fixed postroll.
 - **`kit/`** — the Python helpers the skill uses: a Lottie scene builder (`Comp`, with springs,
-  text reveals, video layers and SkSL layer shaders), ready-made shaders, the finish pass, music
-  generation (ACE-Step, local or Replicate) and a beat grid with a sync check.
+  text reveals, video layers, clipped precomps and SkSL layer shaders), ready-made shaders, the
+  finish pass, music generation (ACE-Step, local or Replicate), a beat grid with a sync check, a
+  camera that frames screen captures on what they show (from a Playwright focus log), fast-played
+  waits, and delivery checks (text size, safe area, contrast on the rendered frames).
 - **kestrel** — a fast native Lottie → video renderer (Skia Skottie + FFmpeg), shipped as a
   compiled binary. It renders MP4, WebM (with alpha), ProRes and WebP posters, and composites
   [HyperFrames](https://github.com/heygen-com/hyperframes) renders as layers, transparent ones
@@ -45,7 +47,9 @@ The skill walks an agent through the same steps for every video:
 3. **Show the real thing.** Real data and real photos, and the real product captured by a script
    so a take can be repeated: **Playwright** for web apps, **Maestro** for iOS and Android apps.
    Captures are saved into the project (`assets/captures/`), named after the storyboard beat they
-   serve, and the build reads them from there. Cut waiting time instead of faking speed.
+   serve, and the build reads them from there. The capture script also logs which element is the
+   subject and when, so the camera can push in on it and pull back, smoothly and held long enough
+   to read. Waits play fast when something visibly happens in them and are cut when nothing does.
 4. **Pick the engine per beat.** kestrel for photo- and clip-heavy beats, text animation and the
    long timeline; HyperFrames for what CSS does best (3D perspective, blur, glass, complex
    layout). kestrel composites the HyperFrames renders, transparent ones included, into one film.
@@ -56,9 +60,10 @@ The skill walks an agent through the same steps for every video:
    timeline table, check sync after rendering (< 3 frames off), and always export a music-free cut.
 7. **Shaders and finish.** Per-object effects as SkSL shaders on a layer (glint, paper);
    whole-frame light leak, glow, grain and vignette in one finish pass.
-8. **Review.** Render stills at every state change, score each beat 1–10, fix the three worst
-   problems, repeat until every beat scores 8+. Then a delivery checklist (text ≥ 5% of frame
-   height, safe areas, truthful claims).
+8. **Review.** First the checks code can measure (`kit/check.py`: text size, safe areas, contrast
+   on the rendered frames; `kit/beats.py`: sync). Then stills at every state change, scored 1–10,
+   the three worst problems fixed, repeated until every beat scores 8+. Every mistake found goes
+   into a ledger (`skill/LEDGER.md`) with the check that catches it next time.
 9. **Deliver.** MP4 for social, WebM for the web, transparent WebM/ProRes for overlays, a WebP
    poster.
 10. **Postroll.** End every marketing video with the same brand end card, unchanged. If there
