@@ -36,10 +36,10 @@ c.shader(card, GLINT, {"uSize": [CW, CH], "uWidth": 0.06, "uGain": 0.55,
                                       (11 * BEAT, -0.3), (13 * BEAT, 1.3), ease=EASE_IN_OUT)},
          name="glint")
 c.text("MEMBER", font="Inter-Bold", size=30, x=X + 48, y=Y + 80, color="#3A2E1A", tracking=300,
-       fade=(6 * BEAT, 6 * BEAT + 0.4))
+       fade=(6 * BEAT, 6 * BEAT + 0.4), decor=True)   # card small print, not a line to read
 c.text("Ada Lovelace", font="EBGaramond-Regular", size=64, x=X + 48, y=Y + CH - 70, color="#2A2112",
        fade=(7 * BEAT, 7 * BEAT + 0.4), rise=12)
 c.text("No. 0001", font="Inter-Regular", size=24, x=X + CW - 48, y=Y + 80, color="#3A2E1A", align="right",
-       fade=(8 * BEAT, 8 * BEAT + 0.4))
+       fade=(8 * BEAT, 8 * BEAT + 0.4), decor=True)
 c.save(HERE / "scene.json")
 print("scene.json")

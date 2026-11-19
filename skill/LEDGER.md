@@ -15,9 +15,9 @@ sentence asks the model to remember, a check doesn't. When no check is possible 
 | 2 | 2026-10 | A layer with a shader vanished from the render, with no error. | `Comp.shader()` adds a ticking uniform; Skottie skips an effect whose uniforms never change | fixed in the kit |
 | 3 | 2026-10 | A shader ignored a `float2` uniform. | `Comp.shader()` docstring: declare `float` or `float x[N]` only | review |
 | 4 | 2026-11-19 | A review sheet showed the stills out of time order (`f12` before `f3`). | §8 step 1: number stills 1, 2, 3… and tile with `f%d.png`, not a glob | skill |
-| 5 | 2026-11-19 | Chapter labels in `chat-sorting` (terracotta on cream, 26 px) measure 2.7:1 after the finish pass, 3.2:1 as designed. | `kit.check --video`: `contrast` | open |
-| 6 | 2026-11-19 | `→ brand.json` in `launch-linkedin` sits 37 px above the bottom edge. | `kit.check`: `safe-area` | open |
-| 7 | 2026-11-19 | Body lines of 24–31 px in all three examples: hard to read on a phone. | `kit.check`: `text-height` (3% floor); mark true decoration `decor=True` | open |
+| 5 | 2026-11-19 | Chapter labels in `chat-sorting` (terracotta on cream, 26 px) measure 2.7:1 after the finish pass, 3.2:1 as designed. | `kit.check --video`: `contrast` | fixed: type uses a darker terracotta (`TERRA_TEXT`, 4.2:1), at 40 px |
+| 6 | 2026-11-19 | `→ brand.json` in `launch-linkedin` sits 37 px above the bottom edge. | `kit.check`: `safe-area` | fixed: 40 px, and the swatch block moved up 40 px |
+| 7 | 2026-11-19 | Body lines of 24–31 px in all three examples: hard to read on a phone. | `kit.check`: `text-height` (3% floor); mark true decoration `decor=True` | fixed: labels a viewer reads are 40 px; swatch hex codes and the card's small print are `decor=True` |
 | 8 | 2026-11-19 | In the `kit-update` film, a cream-on-orange tag (2.6:1) and an amber ×12 on light glass over a white UI (1.4:1). | `kit.check --video`: `contrast` | fixed: dark text on the tag, a solid dark pill behind ×12 |
 
 ## Checks by id

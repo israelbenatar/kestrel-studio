@@ -37,6 +37,8 @@ HF_OUTRO_ALPHA = HERE / "hf" / "outro-alpha.mov"
 
 W, H, FPS = 1080, 1350, 30
 CREAM, INK, TERRA, MUTED, DOT_OFF = "#F5F0E8", "#2D3436", "#B07A64", "#6E6862", "#D6CDC2"
+TERRA_TEXT = "#9C6450"                 # terracotta for type: 4.2:1 on cream (TERRA is 3.2:1, too light for text)
+LABEL = "InterTight-SemiBold"          # board labels: 40 px fits a half-width column
 CHAT = (1048, 600, 1422, 884)        # chat panel crop in the 1440x900 recordings
 STRIP = (120, 812, 760, 895)         # page strip with its chapter labels
 CHAT_W = 900
@@ -44,13 +46,14 @@ CHAT_H = round(CHAT_W * (CHAT[3] - CHAT[1]) / (CHAT[2] - CHAT[0]) / 2) * 2   # e
 STRIP_W = W - 120
 STRIP_H = round(STRIP_W * (STRIP[3] - STRIP[1]) / (STRIP[2] - STRIP[0]) / 2) * 2
 HOLD, REBUILD, PAYOFF, XF = 0.5, 1.0, 4.5, 0.35
+BOARD_Y, LABEL_H, BOARD_PH = 200, 52, 130     # board top, label row, photo row height
 
 SEGMENTS = [
     ("1 · By date", "“Put my album in date order, oldest photos first.”",
      [("date", 10.0, 13.6, 1.0), ("date", 13.6, 33.6, 10.0), ("date", 33.6, 38.2, 1.1)],
      "Oldest to newest",
      [("2000 · Birthday cake", ["bday-02"]), ("2001 · First sandcastle", ["sea-01"]),
-      ("2004 · First day of school", ["school-06"]), ("2009 · Paris", ["city-11"]),
+      ("2004 · First school day", ["school-06"]), ("2009 · Paris", ["city-11"]),
       ("2016 · Graduation", ["school-18"]), ("2024 · Times Square", ["city-26"])]),
     ("2 · By theme", "“Now group the album by theme instead of by date.”",
      [("theme", 11.3, 14.6, 1.0), ("theme", 14.6, 29.0, 8.0), ("theme", 29.0, 34.0, 1.0), ("theme", 34.0, 41.0, 2.4)],
@@ -170,12 +173,12 @@ def build():
     for si, (title, request, pieces, heading, cells) in enumerate(SEGMENTS):
         chat_mp4, strip_mp4, chat_len = media[si]
         a, b = starts[f"ask{si}"]
-        c.text(title, font="Inter-Bold", size=26, x=60, y=82, color=TERRA, ip=a, op=b, fade=(a, a + XF),
-               fade_out=(b - XF, b), tracking=20)
+        c.text(title, font="Inter-Bold", size=40, x=60, y=96, color=TERRA_TEXT, ip=a, op=b, fade=(a, a + XF),
+               fade_out=(b - XF, b), tracking=10)
         lines = wrap(request, "EBGaramond-Italic", 40, W - 120)
-        c.text("\n".join(lines), font="EBGaramond-Italic", size=40, line_height=50, x=60, y=140, color=INK, ip=a, op=b,
+        c.text("\n".join(lines), font="EBGaramond-Italic", size=40, line_height=50, x=60, y=160, color=INK, ip=a, op=b,
                typewriter=(a + 0.2, a + 0.2 + 0.02 * len(request)), fade_out=(b - XF, b))
-        cy = max(140 + 50 * (len(lines) - 1) + 50, 300)
+        cy = max(160 + 50 * (len(lines) - 1) + 50, 300)
         sh, pad = shadow(CHAT_W, CHAT_H)
         card_in = (a + 0.15, a + 0.75)
         c.image(sh, (W - CHAT_W) // 2 - pad, cy - pad, CHAT_W + 2 * pad, CHAT_H + 2 * pad, ip=a, op=b,
@@ -183,9 +186,9 @@ def build():
         c.video(chat_mp4, (W - CHAT_W) // 2, cy, CHAT_W, CHAT_H, start=a, radius=24, ip=a, op=b, fade=card_in, rise=40,
                 fade_out=(b - XF, b), name="chat")
         sy = cy + CHAT_H + 40
-        c.text("Your album", font="Inter-Bold", size=24, x=60, y=sy + 22, color=MUTED, ip=a, op=b,
-               fade=(a + 0.4, a + 0.9), fade_out=(b - XF, b), tracking=20)
-        c.video(strip_mp4, 60, sy + 40, STRIP_W, STRIP_H, start=a, radius=8, ip=a, op=b, fade=(a + 0.4, a + 0.9),
+        c.text("Your album", font="Inter-Bold", size=40, x=60, y=sy + 34, color=MUTED, ip=a, op=b,
+               fade=(a + 0.4, a + 0.9), fade_out=(b - XF, b), tracking=10)
+        c.video(strip_mp4, 60, sy + 56, STRIP_W, STRIP_H, start=a, radius=8, ip=a, op=b, fade=(a + 0.4, a + 0.9),
                 rise=24, fade_out=(b - XF, b), name="strip")
         # the cut over the wait: a cream veil, the words, three breathing dots
         r0 = a + chat_len + HOLD
@@ -200,28 +203,28 @@ def build():
 
         # the board: chapters with their photos
         a, b = starts[f"board{si}"]
-        c.text(title, font="Inter-Bold", size=26, x=60, y=82, color=TERRA, ip=a, op=b, fade=(a, a + XF),
-               fade_out=(b - XF, b), tracking=20)
-        c.text(heading, font="EBGaramond-Regular", size=58, x=60, y=152, color=INK, ip=a, op=b,
+        c.text(title, font="Inter-Bold", size=40, x=60, y=96, color=TERRA_TEXT, ip=a, op=b, fade=(a, a + XF),
+               fade_out=(b - XF, b), tracking=10)
+        c.text(heading, font="EBGaramond-Regular", size=58, x=60, y=164, color=INK, ip=a, op=b,
                reveal=(a + 0.05, a + 0.6), fade_out=(b - XF, b))
         single = all(len(k) == 1 for _, k in cells)
         cw, gap = (W - 120 - 40) // 2, 10
-        ph = 276 if single else 135
-        rowh = 40 + (ph if single else 2 * ph + gap) + 28
+        ph = 264 if single else BOARD_PH
+        rowh = LABEL_H + (ph if single else 2 * ph + gap) + 28
         hw = (cw - gap) // 2
         for i, (name, keys) in enumerate(cells):
-            x, y = 60 + (i % 2) * (cw + 40), 196 + (i // 2) * rowh
+            x, y = 60 + (i % 2) * (cw + 40), BOARD_Y + (i // 2) * rowh
             t_in = a + 0.3 + i * 0.28
             inn = (t_in, t_in + 0.5)
-            c.circle(x + 6, y + 17, 12, TERRA, ip=a, op=b, fade=inn, rise=24, fade_out=(b - XF, b))
-            c.text(name, font="Inter-Bold", size=28, x=x + 24, y=y + 28, color=INK, ip=a, op=b, fade=inn, rise=24,
+            c.circle(x + 6, y + 22, 12, TERRA, ip=a, op=b, fade=inn, rise=24, fade_out=(b - XF, b))
+            c.text(name, font=LABEL, size=40, x=x + 24, y=y + 36, color=INK, ip=a, op=b, fade=inn, rise=24,
                    fade_out=(b - XF, b))
             if single:
-                boxes = [(0, 40, cw, ph)]
+                boxes = [(0, LABEL_H, cw, ph)]
             elif len(keys) == 3:
-                boxes = [(0, 40, cw, ph), (0, 40 + ph + gap, hw, ph), (hw + gap, 40 + ph + gap, hw, ph)]
+                boxes = [(0, LABEL_H, cw, ph), (0, LABEL_H + ph + gap, hw, ph), (hw + gap, LABEL_H + ph + gap, hw, ph)]
             else:
-                boxes = [((k % 2) * (hw + gap), 40 + (k // 2) * (ph + gap), hw, ph) for k in range(4)]
+                boxes = [((k % 2) * (hw + gap), LABEL_H + (k // 2) * (ph + gap), hw, ph) for k in range(4)]
             for k, (key, (bx, by, bw, bh)) in enumerate(zip(keys, boxes)):
                 tk = t_in + 0.06 * k
                 c.image(photo_tile(key, bw, bh), x + bx, y + by, bw, bh, radius=12, ip=a, op=b,
@@ -234,12 +237,12 @@ def build():
         # kestrel keeps the last board's photos on screen, dimmed and drifting; HyperFrames lays its
         # panel, type and chips over them with real transparency
         cells = SEGMENTS[-1][4]
-        cw, gap, ph = (W - 120 - 40) // 2, 10, 135
-        hw, rowh = (cw - gap) // 2, 40 + 2 * 135 + 10 + 28
+        cw, gap, ph = (W - 120 - 40) // 2, 10, BOARD_PH
+        hw, rowh = (cw - gap) // 2, LABEL_H + 2 * BOARD_PH + 10 + 28
         for i, (_name, keys) in enumerate(cells):
-            x, y = 60 + (i % 2) * (cw + 40), 196 + (i // 2) * rowh
+            x, y = 60 + (i % 2) * (cw + 40), BOARD_Y + (i // 2) * rowh
             for k, key in enumerate(keys):
-                bx, by = (k % 2) * (hw + gap), 40 + (k // 2) * (ph + gap)
+                bx, by = (k % 2) * (hw + gap), LABEL_H + (k // 2) * (ph + gap)
                 c.image(photo_tile(key, hw, ph), x + bx, y + by, hw, ph, radius=12, ip=a, op=b, opacity=45,
                         zoom=((a, b), (100, 106)), name="outro photo")
         c.video(HF_OUTRO_ALPHA, 0, 0, W, H, start=a, ip=a, op=b, name="hf outro (alpha)")
