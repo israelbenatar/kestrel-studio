@@ -46,13 +46,13 @@ def glass_box(x, y, w, h, r, name, **motion):
 
 def chip(num, label, t0, t1):
     """The beat's title: a glass pill at the top with a mono number and the claim."""
-    size, nsize = 44, 30
+    size, nsize = 44, 40
     tw = measure(label, SANS, size) + measure(num, MONO, nsize) + 26
     w, h = round(tw + 84), 92
     x, y = (W - w) / 2, 150
     m = dict(ip=t0, op=t1, fade=(t0, t0 + 0.3), fade_out=(t1 - 0.25, t1))
     glass_box(x, y, w, h, h // 2, f"chip{num}", rise=14, **m)
-    c.text(num, font=MONO, size=nsize, x=x + 42, y=y + 57, color=AMB, rise=14, **m)
+    c.text(num, font=MONO, size=nsize, x=x + 42, y=y + 60, color=AMB, rise=14, **m)
     c.text(label, font=SANS, size=size, x=x + 42 + measure(num, MONO, nsize) + 26, y=y + 61, color=INK, rise=14, **m)
 
 
@@ -96,7 +96,7 @@ site_layers = [
 for L in site_layers:
     out_at(L, 16.0, 0.15)
 chip("01", "Takes the look from your site", 12.0, 16.0)
-sw_y, tile, gapx = 1000, 132, 26
+sw_y, tile, gapx = 960, 132, 26
 names = [("background", "#0E0F13"), ("ink", INK), ("accent", RUF), ("accent 2", AMB), ("counter", SLATE)]
 x0 = (W - (5 * tile + 4 * gapx)) / 2
 for i, (nm, col) in enumerate(names):
@@ -105,11 +105,11 @@ for i, (nm, col) in enumerate(names):
     m = dict(ip=t, op=16.0, fade=(t, t + 0.2), pop=t)
     glass_box(x, sw_y, tile, tile, 24, "swatch", **m)
     c.rect(x + 16, sw_y + 16, tile - 32, tile - 32, col, radius=14, **m)
-    c.text(col.upper(), font=MONO, size=19, x=x + tile / 2, y=sw_y + tile + 34, color=MUTED, align="center", **m)
-c.text("Inter Tight", font=SANS, size=46, x=x0, y=1250, color=INK, ip=14.0, op=16.0, fade=(14.0, 14.3), rise=14)
-c.text("Instrument Serif", font=SERIF, size=54, x=x0 + measure("Inter Tight", SANS, 46) + 26, y=1250, color=AMB,
+    c.text(col.upper(), font=MONO, size=19, x=x + tile / 2, y=sw_y + tile + 34, color=MUTED, align="center", decor=True, **m)
+c.text("Inter Tight", font=SANS, size=46, x=x0, y=1206, color=INK, ip=14.0, op=16.0, fade=(14.0, 14.3), rise=14)
+c.text("Instrument Serif", font=SERIF, size=54, x=x0 + measure("Inter Tight", SANS, 46) + 26, y=1206, color=AMB,
        ip=14.0, op=16.0, fade=(14.25, 14.55), rise=14)
-c.text("→ brand.json", font=MONO, size=28, x=W - x0, y=1306, color=INK2, align="right", ip=15.0, op=16.0,
+c.text("→ brand.json", font=MONO, size=40, x=W - x0, y=1272, color=INK2, align="right", ip=15.0, op=16.0,
        fade=(15.0, 15.3), rise=10)
 
 # ---------------------------------------------------------------- 6 · 16.0–19.0  ② the real product (the drop)
@@ -133,7 +133,7 @@ c.shader(card, PAPER, {"uScale": 2.0, "uAmount": 0.12, "uSeed": 3.0}, name="pape
 c.shader(card, GLINT, {"uSize": [CW, CH], "uWidth": 0.06, "uGain": 0.55,
                        "uPos": c.keys((20.5, -0.3), (21.5, 1.3), ease=EASE_IN_OUT)}, name="glint")   # centre on 21.0
 cm = dict(ip=19.0, op=22.0, fade=(19.3, 19.6), fade_out=(21.8, 22.0))
-c.text("♩ 120 BPM", font=MONO, size=28, x=X + 44, y=Y + 74, color="#3A2E1A", **cm)
+c.text("♩ 120 BPM", font=MONO, size=40, x=X + 44, y=Y + 74, color="#3A2E1A", **cm)
 c.text("On the beat.", font=SERIF, size=78, x=X + 44, y=Y + CH - 56, color="#2A2112", **cm)
 # the real waveform of this film's own track, 19–22 s, with the beats lit as the playhead passes
 x = load(str(MUSIC))
@@ -151,7 +151,7 @@ for i, v in enumerate(rms):
                  fade=(19.2 + i * 0.01, 19.4 + i * 0.01), fade_out=(21.8, 22.0), name="wave")
 head = c.rect(wx0, wy - 110, 4, 220, CREAM, radius=2, ip=19.0, op=22.0, pivot="origin", fade_out=(21.8, 22.0), name="playhead")
 head["ks"]["p"] = c.keys((19.0, [wx0, wy - 110, 0]), (22.0, [wx1, wy - 110, 0]), ease=LINEAR)
-c.text("cuts on the beat · sync ±0.9 frames", font=MONO, size=30, x=W / 2, y=1222, color=INK2, align="center", **cm)
+c.text("cuts on the beat · sync ±0.9 frames", font=MONO, size=40, x=W / 2, y=1222, color=INK2, align="center", **cm)
 
 # ---------------------------------------------------------------- 8 · 22.0–25.5  ④ speed + every aspect
 chip("04", "Renders at 120 fps, every aspect", 22.0, 25.5)
@@ -185,7 +185,7 @@ for i, ((lab, a), (w, h)) in enumerate(zip(asp, sizes)):
     x = ax0 + sum(s[0] for s in sizes[:i]) + gap * i
     m = dict(ip=t, op=25.5, fade=(t, t + 0.15), pop=t, fade_out=(25.3, 25.5))
     c.image(p, x, base - h, w, h, radius=14, **m)
-    c.text(lab, font=MONO, size=28, x=x + w / 2, y=base + 48, color=INK2, align="center", **m)
+    c.text(lab, font=MONO, size=40, x=x + w / 2, y=base + 54, color=INK2, align="center", **m)
 
 # ---------------------------------------------------------------- 9 · 25.5–30.0  finale
 FT = 25.5
@@ -212,7 +212,7 @@ c.text("An agent skill + a 120 fps renderer.", font=SANS_R, size=44, x=W / 2, y=
        ip=26.5, op=30.3, fade=(26.5, 26.8), rise=12)
 c.text("Free for builders & teams up to 10", font=SANS, size=48, x=W / 2, y=1020, color=INK, align="center",
        ip=27.0, op=30.3, fade=(27.0, 27.3), rise=12)
-c.text(URL, font=MONO, size=31, x=W / 2, y=1085, color=RUF, align="center", ip=27.5, op=30.3, fade=(27.5, 27.8), rise=10)
+c.text(URL, font=MONO, size=40, x=W / 2, y=1092, color=RUF, align="center", ip=27.5, op=30.3, fade=(27.5, 27.8), rise=10)
 
 # ---------------------------------------------------------------- 10 · 30.0–33.0  postroll v1 (unchanged)
 c.video(HERE / "brand" / "postroll-4x5.mp4", 0, 0, W, H, start=30.0, ip=30.0, op=DUR, fade=(30.0, 30.3), name="postroll v1")
