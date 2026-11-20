@@ -25,6 +25,7 @@ Repo layout this skill assumes (`$KIT` = the repo root):
 | `kit/check.py` | The delivery checks code can measure: text height, safe area, contrast on the frames (§8). |
 | `kit/voice.py` | Voice-over from text with Gemini TTS (`gemini-3.8-flash-tts`), written as FLAC (§6). |
 | `kit/words.py` | Word times from a voice file (whisper, on this machine); kinetic words (the voice-over lands in the frame one word at a time, key words optionally behind the subject); a 3D ring of words (§5a). |
+| `kit/poster.py` | Poster title looks: rows of repeated text on a diagonal with faded echoes, a pen circle that draws itself, spaced letters down a margin, a cut made of square blocks; `fit_size` (§5a). |
 | `kit/env.py` | API keys from the environment or the repo's git-ignored `.env` (`GOOGLE_API_KEY`, `REPLICATE_API_TOKEN`). |
 | `skill/LEDGER.md` | Every mistake found in a delivered video, with the check that now catches it (§8). |
 | `kestrel` | The renderer binary (Lottie/Bodymovin → MP4 / ProRes / PNG). |
@@ -237,6 +238,13 @@ Rules learned the hard way:
   tilted circle that turns; the back half is small, dim and mirrored, and is drawn in `back` (under
   the subject), the front half in `front`. Around a head, tilt about 30° so the front passes under
   the chin, not across the face. `kit.check` cannot measure moving letters: review them on stills.
+- **Poster titles** (`kit/poster.py`, `examples/poster-titles`): give each scene its own look, and
+  cut between them with `pixel_cut(c, t, colors=[...])` (change the scene under it at `t`; use the
+  next scene's colour for most blocks). `echo_rows(...)` fills the frame with diagonal rows of a
+  short repeated line; keep clear margins (a strip of the background) where `margin_text` runs.
+  `draw_ellipse(...)` circles one word or date, like a pen. Set stepped word sizes with
+  `fit_size(word, font, width=, most=)`. `kit.check` cannot measure rotated text: echo rows and
+  margin text are `decor`, so review them on stills.
 - Use `kestrel inspect scene.json` to list what a template lets you override; a job file can swap
   text, images, clips, colours and effect controls without touching the scene.
 
