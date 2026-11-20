@@ -32,6 +32,15 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+
+def _secret(name: str) -> str:
+    """From the environment or the repo's .env (kit/env.py); this file also runs as a plain script."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("kit_env", Path(__file__).with_name("env.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.secret(name)
+
 SERVER = "http://127.0.0.1:8001"
 REPLICATE_VERSION = "74e3a7d383b18815e277de5223f5fe9d53d38832de15aa567fe729fa129d0d85"   # fishaudio/ace-step-1.5
 
@@ -53,8 +62,8 @@ def _post(path: str, body: dict, server: str, headers: dict | None = None) -> di
 def generate_replicate(prompt: str, *, bpm: int, duration: float, seed: int, out_dir: Path,
                        key: str = "", instrumental: bool = True, timeout: float = 900) -> Path:
     """The same candidate, generated on Replicate. Needs REPLICATE_API_TOKEN."""
-    token = os.environ["REPLICATE_API_TOKEN"]
-    auth = {"Authorization": f"Bearer {token}"}
+    token = _secret("REPLICATE_API_TOKEN")
+    auth = {"Authorization": f"Bearer {token}", "User-Agent": "kestrel-studio-kit"}   # the default urllib agent gets a 403
     inputs = {"prompt": prompt, "bpm": bpm, "key_scale": key, "time_signature": "4",
               "duration": duration, "seed": seed, "batch_size": 1, "audio_format": "flac",
               "thinking": False}

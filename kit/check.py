@@ -59,6 +59,11 @@ def _settled(layer) -> float:
             # more: a baked spring, landed on its last key
             if len(keys) > 2 or keys[1]["t"] - keys[0]["t"] < 3 * 30:
                 t = max(t, keys[-1]["t"] if len(keys) > 2 else keys[1]["t"])
+    for ef in layer.get("ef", []):                  # a blur that brings it into focus (kit.words)
+        if ef.get("ty") == 29:
+            v = ef["ef"][0]["v"]
+            if v.get("a"):
+                t = max(t, next((k["t"] for k in v["k"] if k["s"][0] <= 0.5), t))
     for an in layer.get("t", {}).get("a", []):
         for side in ("s", "e"):
             p = an["s"].get(side)
@@ -97,7 +102,8 @@ def texts(scene: dict, fonts: Path | None = None):
                 lines = doc["t"].split("\r")
                 w = max(_width(s, doc["f"], size, doc.get("tr", 0), fonts) for s in lines)
                 x, y = _val(L["ks"]["p"])[:2]
-                x, y = ox + x, oy + y
+                ax, ay = _val(L["ks"]["a"])[:2]              # the text origin is the position minus the anchor
+                x, y = ox + x - ax, oy + y - ay
                 x0 = {0: x, 1: x - w, 2: x - w / 2}[doc.get("j", 0)]
                 y0 = y - size * 0.75
                 y1 = y + (len(lines) - 1) * lh + size * 0.25
@@ -119,10 +125,11 @@ def frame(video, t, w, h) -> np.ndarray:
     return np.frombuffer(raw, np.uint8).reshape(h, w, 3) / 255.0
 
 
-def contrast(img, box, colour, size) -> float | None:
+def contrast(img, box, colour, size, pct=10, hide=None) -> float | None:
     """The worst-case ratio of the text colour against the picture behind the box: the 10th
     percentile over the pixels that are clear of the letters. The letters' soft edges blend text
-    and background, so a band of about 8% of the font size around them is left out."""
+    and background, so a band of about 8% of the font size around them is left out.
+    hide: a frame-sized mask of pixels to leave out too (a subject in front of the text)."""
     x0, y0, x1, y1 = (int(round(v)) for v in box)
     x0, y0, x1, y1 = max(0, x0), max(0, y0), min(img.shape[1], x1), min(img.shape[0], y1)
     if x1 - x0 < 4 or y1 - y0 < 4:
@@ -135,21 +142,48 @@ def contrast(img, box, colour, size) -> float | None:
     for dy in range(-r, r + 1):
         for dx in range(-r, r + 1):
             near |= pad[r + dy:r + dy + ink.shape[0], r + dx:r + dx + ink.shape[1]]
-    bg = px[~near]
+    keep = ~near
+    if hide is not None:
+        keep &= ~hide[y0:y1, x0:x1]
+    bg = px[keep]
     if len(bg) < 0.1 * ink.size:
         return None                                  # the box is all text-coloured: nothing to compare
     lt, lb = _lum(colour[:3]), _lum(bg)
     ratio = (np.maximum(lt, lb) + 0.05) / (np.minimum(lt, lb) + 0.05)
-    return float(np.percentile(ratio, 10))
+    return float(np.percentile(ratio, pct))
 
 
-def run(scene_path, video=None, channel="default", min_height=0.03, min_contrast=3.0, fonts=None) -> list[str]:
+def silent(video) -> bool:
+    """True when the video has an audio track and that track is silence (kestrel's --audio drops
+    a WAV without a word and renders a silent track)."""
+    probe = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index",
+                            "-of", "csv=p=0", str(video)], capture_output=True, text=True).stdout.strip()
+    if not probe:
+        return False
+    out = subprocess.run(["ffmpeg", "-i", str(video), "-vn", "-af", "volumedetect", "-f", "null", "-"],
+                         capture_output=True, text=True).stderr
+    m = [line for line in out.splitlines() if "max_volume" in line]
+    return bool(m) and float(m[-1].split("max_volume:")[1].split("dB")[0]) < -60
+
+
+def alpha(video, t, w, h) -> np.ndarray:
+    """The alpha channel of a matte (a clip with transparency) at time *t*, as a mask (> 50%)."""
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{t:.3f}", "-i", str(video), "-frames:v", "1",
+                          "-vf", f"scale={w}:{h}", "-f", "rawvideo", "-pix_fmt", "rgba", "-"],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(raw, np.uint8).reshape(h, w, 4)[..., 3] > 127
+
+
+def run(scene_path, video=None, channel="default", min_height=0.03, min_contrast=3.0, fonts=None,
+        matte=None) -> list[str]:
     scene = json.loads(Path(scene_path).read_text())
     W, H, fps = scene["w"], scene["h"], scene["fr"]
     tall = H / W > 1.6
     ml, mt, mr, mb = SAFE["reels" if channel == "reels" or (channel == "default" and tall) else "default"]
     problems = []
     fonts = Path(fonts) if fonts else Path(__file__).resolve().parent.parent / "fonts"
+    if video and silent(video):
+        problems.append("audio        the audio track is silence: give kestrel --audio a FLAC/M4A/MP3, not a WAV")
     for L, x0, y0, x1, y1, size, colour, ip, op in texts(scene, fonts):
         if L.get("cl") == "decor" or op <= 0 or ip >= scene["op"]:
             continue
@@ -157,12 +191,23 @@ def run(scene_path, video=None, channel="default", min_height=0.03, min_contrast
         if size < round(min_height * H):
             problems.append(f"text-height  {name!r}: {size:.0f} px, needs {round(min_height * H)} px "
                             f"({min_height:.0%} of {H}); mark it decor=True if no one has to read it")
+        p = L["ks"].get("p", {})
+        if p.get("a") and len(p["k"]) > 12:
+            # baked motion (a text ring, a word on a path): its box moves every frame, so the
+            # box checks would measure the wrong place; review it on the stills instead
+            continue
         if x0 < ml * W or x1 > (1 - mr) * W or y0 < mt * H or y1 > (1 - mb) * H:
             problems.append(f"safe-area    {name!r}: box {x0:.0f},{y0:.0f}-{x1:.0f},{y1:.0f} leaves the safe area "
                             f"{ml * W:.0f},{mt * H:.0f}-{(1 - mr) * W:.0f},{(1 - mb) * H:.0f}")
         if video:
-            t = min(_settled(L) + 0.1 * fps, op - 1) / fps
-            r = contrast(frame(video, t, W, H), (x0, y0, x1, y1), colour, size)
+            t = min(_settled(L) + 0.1 * fps, op - 1, scene["op"] - 2) / fps   # a frame the video has
+            # a word behind a matted subject (kit.words, behind=): the subject crosses its box but hides
+            # the letters there. With the matte, leave the subject's pixels out; without it, judge the
+            # word on the typical background (the median), not the darkest tenth.
+            behind = L.get("cl") == "behind"
+            hide = alpha(matte, t, W, H) if (behind and matte) else None
+            pct = 50 if (behind and not matte) else 10
+            r = contrast(frame(video, t, W, H), (x0, y0, x1, y1), colour, size, pct, hide)
             if r is not None and r < min_contrast:
                 problems.append(f"contrast     {name!r}: {r:.1f}:1 at {t:.2f}s, needs {min_contrast}:1; "
                                 f"add a backing panel or a soft shade, or move it")
@@ -177,9 +222,10 @@ if __name__ == "__main__":
                     help="reels: 9:16 platform UI margins (the default for any tall frame); web: plain margins")
     ap.add_argument("--min-height", type=float, default=0.03)
     ap.add_argument("--min-contrast", type=float, default=3.0)
+    ap.add_argument("--matte", help="the subject's matte (a clip with alpha), for words placed behind it")
     ap.add_argument("--fonts", help="folder of the scene's fonts (default: the repo's fonts/)")
     a = ap.parse_args()
-    probs = run(a.scene, a.video, a.channel, a.min_height, a.min_contrast, a.fonts)
+    probs = run(a.scene, a.video, a.channel, a.min_height, a.min_contrast, a.fonts, a.matte)
     for p in probs:
         print(p)
     print(f"{len(probs)} problem(s)" if probs else "all checks pass")

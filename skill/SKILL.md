@@ -23,6 +23,9 @@ Repo layout this skill assumes (`$KIT` = the repo root):
 | `kit/camera.py` | Frames a capture on its focus log: smooth push-ins and pull-backs inside a card (§3). |
 | `kit/waits.py` | Measures where a capture's picture changes; plays waits fast, cuts still ones (§3). |
 | `kit/check.py` | The delivery checks code can measure: text height, safe area, contrast on the frames (§8). |
+| `kit/voice.py` | Voice-over from text with Gemini TTS (`gemini-3.8-flash-tts`), written as FLAC (§6). |
+| `kit/words.py` | Word times from a voice file (whisper, on this machine); kinetic words (the voice-over lands in the frame one word at a time, key words optionally behind the subject); a 3D ring of words (§5a). |
+| `kit/env.py` | API keys from the environment or the repo's git-ignored `.env` (`GOOGLE_API_KEY`, `REPLICATE_API_TOKEN`). |
 | `skill/LEDGER.md` | Every mistake found in a delivered video, with the check that now catches it (§8). |
 | `kestrel` | The renderer binary (Lottie/Bodymovin → MP4 / ProRes / PNG). |
 | `fonts/` | Open-licensed fonts, referenced by file stem. |
@@ -191,6 +194,49 @@ Rules learned the hard way:
 - **Stagger** arrivals by ~0.25–0.3 s per item and ~0.06 s within a group.
 - Right-to-left replacement text: kestrel sets RTL and mirrors per-character reveals so they run
   in reading order.
+- **Kinetic words** (`kit/words.py`) put a voice-over in the frame instead of a caption bar.
+  `transcribe(voice)` gives each word's time (mlx-whisper, `whisper-large-v3-turbo`, offline once
+  the model is downloaded); `phrases(words)` breaks them into short phrases;
+  `kinetic(c, groups, keys={...})` lands each word at its own time: small words small and plain,
+  the **key words** large in the accent colour with a slight tilt. A word comes into focus from a
+  blur; when its phrase ends it blurs back and stays as a faint echo while the next phrase lands.
+  **You choose the keys** (one or two a phrase: the words that carry the line), and pass your own
+  groups when a default break reads wrong. Keep `subtitle=` on for viewers who read. Save the word
+  times to a file so a rebuild does not run whisper again. `c.blur(layer, amount)` is the blur.
+  A phrase stays until each key word has been sharp 0.6 s (`hold=`), so few keys land harder than many.
+- **Words behind the subject.** Cut the person out: `npx hyperframes remove-background clip.mp4 -o
+  person-alpha.mov --device cpu` (about 2 fps at 1080p; CoreML spoils the edges of a face). Stack:
+  the clip, a `behind = c.precomp(0, 0, W, H)` group, the cut-out clip, a `front` group, then the
+  rest. `kinetic(..., behind=behind)` sends the key words behind her. Leave room above the head
+  (crop high): a word whose middle the head covers does not read. Check with
+  `kit.check --video out.mp4 --matte person-alpha.mov`, which leaves the subject's pixels out.
+- **A generated speaker** (no real footage). This recipe gave good lip sync on the first video
+  run (`examples/behind-words`). Do the steps in this order; only step 3 is expensive:
+  1. **The still** (cheap; iterate here, not on video):
+     `run("black-forest-labs/flux-1.1-pro", {"prompt": ..., "aspect_ratio": "3:4"}, "media/portrait.png")`.
+     The prompt asks for: a head-and-shoulders portrait, facing the camera, mouth closed, a plain
+     wall, much room above the head, soft even light, no hands near the face. Give a generic look
+     (for example "a generic Israeli woman in her thirties"), never a real person. Look at the
+     still before you continue.
+  2. **The voice** (cheap): `python -m kit.voice "..." -o media/voice.flac --style "..."`. Make it
+     final now: the script, the accent, the speed. Listen to it, or ask the user to listen. The
+     video run takes this file, so a later change to the words costs a new video run.
+  3. **The talking clip** (expensive; billed per second of output; about 4 min for 10 s): animate
+     the still *with that voice file*, one run:
+     `run("bytedance/omni-human-1.5", {"image": upload("media/portrait.png"), "audio": upload("media/voice.flac")}, "media/talk.mp4")`.
+     The clip is as long as the voice. `run()` returns the saved file when it already exists, so a
+     rebuild does not pay again; pass `force=True` only to make a new clip.
+  4. **Fit it** (free): `ffmpeg -i talk.mp4 -vf scale=1080:-2,crop=1080:1350:0:0,fps=24 person-4x5.mp4`
+     (OmniHuman gives 1248×1664 at 25 fps), then cut the person out (above).
+  Do not: make a talking clip from a prompt (Seedance, Kling, Veo) and lay a voice over it, as the
+  mouth says other words (ledger 12); test the API with a real `POST .../predictions`, as each
+  one is a billed job; start a second video run before you look at the first. Check the mouth on
+  a close crop of stills (`ffmpeg -ss T -i talk.mp4 -vf crop=... -frames:v 1`). Say in the post
+  that the person is AI-generated.
+- **A ring of words in 3D** (`ring(c, text, cx, cy, radius, t0, t1, back=, front=)`): letters on a
+  tilted circle that turns; the back half is small, dim and mirrored, and is drawn in `back` (under
+  the subject), the front half in `front`. Around a head, tilt about 30° so the front passes under
+  the chin, not across the face. `kit.check` cannot measure moving letters: review them on stills.
 - Use `kestrel inspect scene.json` to list what a template lets you override; a job file can swap
   text, images, clips, colours and effect controls without touching the scene.
 
@@ -251,6 +297,19 @@ HyperFrames (heygen-com/hyperframes) renders HTML compositions frame by frame. I
 - **Check sync after rendering**: `python kit/beats.py out/final.mp4 --bpm 120 --check 2,3.5,6`
   reports each landing's distance from the nearest beat in the render's own audio; pass at < 3
   frames.
+- **Voice-over from text: Gemini TTS** (`kit/voice.py`). Set `GOOGLE_API_KEY` in the environment or
+  in a git-ignored `.env` at the repo root, then
+  ```sh
+  python -m kit.voice "the line" -o media/voice.flac --voice female \
+      --style "warm, confident and clear, like a short product demo; natural pace"
+  ```
+  `female` is Kore, `male` is Charon; any Gemini voice name also works. `--style` says *how* to
+  say it in plain words; the text is only what is said. It is billed per request: make one
+  take, listen, then change the style rather than generating many. Never use the macOS `say`
+  voice for anything a viewer hears: it sounds robotic. AI voices are disclosed like AI music.
+- **kestrel's `--audio` drops WAV without a warning** and renders a silent track. Give it FLAC,
+  M4A or MP3 (`kit/voice.py` writes FLAC at 48 kHz). After any render with sound, measure it:
+  `ffmpeg -i out.mp4 -vn -af volumedetect -f null -` — a mean near −91 dB is silence.
 - **Narration**: normalise VO to −16 LUFS and duck music under it (~0.25). VO is aspect-agnostic —
   reflowing to another aspect or swapping images doesn't need new audio; a new language does.
 - **Always also export a music-free cut** — Reels/TikTok users add their own sound.

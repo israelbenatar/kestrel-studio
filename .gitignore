@@ -20,3 +20,7 @@ examples/*/assets/captures/
 examples/*/hf/*/assets/*.png
 examples/*/brand/*.mp4
 examples/*/brand/postroll.json
+# secrets (GOOGLE_API_KEY for kit.voice)
+.env
+!examples/kinetic-words/words.json
+!examples/behind-words/words.json
