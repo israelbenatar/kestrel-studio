@@ -55,10 +55,13 @@ def _settled(layer) -> float:
         p = ks.get(key, {})
         if p.get("a") and len(p["k"]) > 1:
             keys = p["k"]
-            # two keys: an eased rise or slide (a slow zoom over the whole life isn't an arrival);
-            # more: a baked spring, landed on its last key
-            if len(keys) > 2 or keys[1]["t"] - keys[0]["t"] < 3 * 30:
-                t = max(t, keys[-1]["t"] if len(keys) > 2 else keys[1]["t"])
+            # a baked spring (keys 1-2 frames apart) has landed on its last key; otherwise the
+            # arrival is the first move (a slow zoom or push after it, or over the whole life, isn't)
+            baked = len(keys) > 2 and all(b["t"] - a["t"] <= 2 for a, b in zip(keys, keys[1:]))
+            if baked:
+                t = max(t, keys[-1]["t"])
+            elif keys[1]["t"] - keys[0]["t"] < 3 * 30:
+                t = max(t, keys[1]["t"])
     for ef in layer.get("ef", []):                  # a blur that brings it into focus (kit.words)
         if ef.get("ty") == 29:
             v = ef["ef"][0]["v"]
@@ -167,11 +170,19 @@ def silent(video) -> bool:
 
 
 def alpha(video, t, w, h) -> np.ndarray:
-    """The alpha channel of a matte (a clip with transparency) at time *t*, as a mask (> 50%)."""
+    """The subject in a matte (a clip with transparency) at time *t*, as a mask. The soft edge
+    counts as subject (alpha > 10%), widened by 6 px: loose hair blends dark into the wall, and is
+    the subject, not the background the text must stand out from."""
     raw = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{t:.3f}", "-i", str(video), "-frames:v", "1",
                           "-vf", f"scale={w}:{h}", "-f", "rawvideo", "-pix_fmt", "rgba", "-"],
                          capture_output=True, check=True).stdout
-    return np.frombuffer(raw, np.uint8).reshape(h, w, 4)[..., 3] > 127
+    m = np.frombuffer(raw, np.uint8).reshape(h, w, 4)[..., 3] > 24
+    r = 6
+    pad, out = np.pad(m, r), m.copy()
+    for dy in range(-r, r + 1, 2):
+        for dx in range(-r, r + 1, 2):
+            out |= pad[r + dy:r + dy + h, r + dx:r + dx + w]
+    return out
 
 
 def run(scene_path, video=None, channel="default", min_height=0.03, min_contrast=3.0, fonts=None,
