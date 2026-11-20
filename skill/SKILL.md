@@ -26,6 +26,7 @@ Repo layout this skill assumes (`$KIT` = the repo root):
 | `kit/voice.py` | Voice-over from text with Gemini TTS (`gemini-3.8-flash-tts`), written as FLAC (§6). |
 | `kit/words.py` | Word times from a voice file (whisper, on this machine); kinetic words (the voice-over lands in the frame one word at a time, key words optionally behind the subject); a 3D ring of words (§5a). |
 | `kit/poster.py` | Poster title looks: rows of repeated text on a diagonal with faded echoes, a pen circle that draws itself, spaced letters down a margin, a cut made of square blocks; `fit_size` (§5a). |
+| `kit/track.py` | Head and shoulder points per frame, measured from a matte; `pin` (words beside or above the head) and `along` (words on the shoulder line) move with the person (§5a). |
 | `kit/env.py` | API keys from the environment or the repo's git-ignored `.env` (`GOOGLE_API_KEY`, `REPLICATE_API_TOKEN`). |
 | `skill/LEDGER.md` | Every mistake found in a delivered video, with the check that now catches it (§8). |
 | `kestrel` | The renderer binary (Lottie/Bodymovin → MP4 / ProRes / PNG). |
@@ -247,6 +248,16 @@ Rules learned the hard way:
   margin text are `decor`, so review them on stills.
   For one shouted word, set a heavy italic (`Barlow-BlackItalic`) that flies in out of a blur
   (`slide=(900, 0), spring=True` and `c.blur(layer, c.keys((t, 40), (t + 0.3, 0)))`).
+- **One huge word behind the subject** (`big_word(behind, "EDITING", t0=, t1=, cy=)`): as wide as
+  the frame (`width=0.9` keeps it in the safe area), its middle at head height, so the head covers
+  part of the letters and the word still reads. Land it at the end of its phrase; it pushes in
+  slowly until the next phrase. Check with `--matte`.
+- **Words on the body** (`kit/track.py`): `tr = silhouette(matte, fps=, cache="track.json")`
+  measures the head and the shoulder line in each frame from the matte (no pose model). Then
+  `pin(front, text, tr, "head_top", dy=-150, ...)` keeps a line above her head, and
+  `along(front, "MUSIC", tr, at=0.8, ...)` sets a word on the shoulder line, turned to its
+  slope. Loose hair can swing across a shoulder column: the tracker takes the body, not the hair.
+  Words along an arm need a pose model (MediaPipe) and a waist-up clip.
 - Use `kestrel inspect scene.json` to list what a template lets you override; a job file can swap
   text, images, clips, colours and effect controls without touching the scene.
 

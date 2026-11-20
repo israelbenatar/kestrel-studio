@@ -128,3 +128,25 @@ def pixel_cut(c: Comp, t, *, colors=("#16181F",), cell=90, dur=0.36, seed=7, fil
             lay = c.rect(q * cell, r * cell, cell, cell, rnd.choice(colors), ip=on, op=off, name="cut block")
             # snap to whole frames, so a block is never half there
             lay["ip"], lay["op"] = math.floor(lay["ip"]), math.ceil(lay["op"])
+
+
+# ---------- one huge word behind the subject ----------
+def big_word(c: Comp, word, *, t0, t1, font="Anton-Regular", color="#16181F", cy=None, width=1.0,
+             fade=0.12, blur=30, push=4, fonts=FONTS, name=None):
+    """*word* as large as the frame is wide (*width* × frame width), centred, its middle at *cy*.
+    Put it in the group under a cut-out person (c = that group): the head covers part of the
+    letters. It lands from a blur at 112%, pushes in by *push* % until t1, and is gone at t1."""
+    cy = c.h * 0.42 if cy is None else cy
+    size = fit_size(word, font, width=c.w * width, most=2000, fonts=fonts)
+    cap = size * 0.72
+    lay = c.text(word, font=font, size=size, x=c.w / 2, y=cy + cap / 2, color=color, align="center",
+                 ip=t0, op=t1, name=name or f"big {word}")
+    lay["cl"] = "behind"                                  # kit.check: the subject may cover it (--matte)
+    lay["ks"]["o"] = c.keys((t0, 0), (t0 + fade, 100), (t1 - fade, 100), (t1, 0))
+    lay["ks"]["a"] = static([0, -cap / 2, 0])                # scale about the word's middle
+    lay["ks"]["p"] = static([c.w / 2, cy, 0])
+    lay["ks"]["s"] = c.keys((t0, [112, 112, 100]), (t0 + 0.3, [100, 100, 100]),
+                            (t1, [100 + push, 100 + push, 100]))
+    if blur:
+        c.blur(lay, c.keys((t0, blur), (t0 + 0.25, 0)))
+    return lay

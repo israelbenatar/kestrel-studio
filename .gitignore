@@ -24,3 +24,4 @@ examples/*/brand/postroll.json
 .env
 !examples/kinetic-words/words.json
 !examples/behind-words/words.json
+!examples/body-words/track.json
