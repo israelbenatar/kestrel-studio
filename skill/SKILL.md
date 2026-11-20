@@ -245,6 +245,8 @@ Rules learned the hard way:
   `draw_ellipse(...)` circles one word or date, like a pen. Set stepped word sizes with
   `fit_size(word, font, width=, most=)`. `kit.check` cannot measure rotated text: echo rows and
   margin text are `decor`, so review them on stills.
+  For one shouted word, set a heavy italic (`Barlow-BlackItalic`) that flies in out of a blur
+  (`slide=(900, 0), spring=True` and `c.blur(layer, c.keys((t, 40), (t + 0.3, 0)))`).
 - Use `kestrel inspect scene.json` to list what a template lets you override; a job file can swap
   text, images, clips, colours and effect controls without touching the scene.
 
