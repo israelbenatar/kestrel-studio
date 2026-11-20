@@ -244,6 +244,17 @@ class Comp:
         return self._layer(5, name or text[:24], ip, op, ks,
                            t={"d": tdoc, "p": {}, "m": {"g": 1, "a": static([0, 0])}, "a": animators}, **extra)
 
+    # ---------- effects ----------
+    def blur(self, layer: dict, amount) -> dict:
+        """Gaussian blur on *layer* (Lottie "Gaussian Blur", run by Skottie). *amount* is a number or
+        an animated property from keys(): words that come into focus, a background pushed back."""
+        prop = amount if isinstance(amount, dict) else static(amount)
+        layer.setdefault("ef", []).append({"ty": 29, "nm": "Gaussian Blur", "mn": "ADBE Gaussian Blur 2", "en": 1, "ef": [
+            {"ty": 0, "nm": "Blurriness", "v": prop},
+            {"ty": 7, "nm": "Blur Dimensions", "v": static(1)},
+            {"ty": 7, "nm": "Repeat Edge Pixels", "v": static(0)}]})
+        return layer
+
     # ---------- shaders ----------
     def shader(self, layer: dict, code: str, uniforms: dict | None = None, *, content: bool = True,
                name: str = "shader") -> dict:

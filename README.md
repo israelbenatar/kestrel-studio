@@ -20,7 +20,8 @@ It is three things:
   text reveals, video layers, clipped precomps and SkSL layer shaders), ready-made shaders, the
   finish pass, music generation (ACE-Step, local or Replicate), a beat grid with a sync check, a
   camera that frames screen captures on what they show (from a Playwright focus log), fast-played
-  waits, and delivery checks (text size, safe area, contrast on the rendered frames).
+  waits, delivery checks (text size, safe area, contrast on the rendered frames), voice-over from
+  text (Gemini TTS) and kinetic words placed on the voice's word times.
 - **kestrel** — a fast native Lottie → video renderer (Skia Skottie + FFmpeg), shipped as a
   compiled binary. It renders MP4, WebM (with alpha), ProRes and WebP posters, and composites
   [HyperFrames](https://github.com/heygen-com/hyperframes) renders as layers, transparent ones
@@ -30,7 +31,7 @@ It is three things:
 
 This started as the in-house pipeline for social and marketing videos for
 [Sustain](https://www.sustain-app.com), an app that turns your photos into a designed photo album.
-Every video in `examples/` was made for Sustain with this kit and shows the real product. The skill
+Every video in `examples/` was made with this kit; the product films are for Sustain and show the real product. The skill
 and the kit themselves are generic: nothing in them is tied to Sustain, albums or any one brand.
 
 ## The workflow
@@ -109,7 +110,8 @@ at `skill/SKILL.md`):
 | What | When you need it | Account or cost |
 |---|---|---|
 | Node.js 22+ and [HyperFrames](https://github.com/heygen-com/hyperframes) (`npx hyperframes`) | HTML-built beats (3D, blur, glass, complex layout) | none: open source, renders locally in headless Chrome |
-| A text-to-speech service (e.g. HeyGen, ElevenLabs) | narrated videos | an account and an API key with that provider; usually paid per character or minute |
+| Voice-over: Gemini TTS (`gemini-3.8-flash-tts`) | narrated videos (`kit/voice.py`) | a Google AI API key (`GOOGLE_API_KEY`, in the environment or a git-ignored `.env`); billed per request |
+| [mlx-whisper](https://github.com/ml-explore/mlx-examples/tree/main/whisper) (`pip install mlx-whisper`) | word times for kinetic words (`kit/words.py`) | none: runs locally on Apple silicon; a one-time ~1.6 GB model download |
 | Music: [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) running locally | generating a track from a prompt (`kit/music.py`) | none: open weights (MIT); about 6 GB of GPU memory (Apple Silicon works), a one-time ~6 GB model download; ~30 s per short track on an M3 Pro |
 | Music: ACE-Step 1.5 on [Replicate](https://replicate.com/fishaudio/ace-step-1.5) | the same, without a GPU (`kit/music.py --replicate`) | a Replicate account with credits and an API token (`REPLICATE_API_TOKEN`); billed per run |
 | Music: your own track | instead of generating one | a licence that covers your channel |
@@ -117,7 +119,7 @@ at `skill/SKILL.md`):
 | [Playwright](https://playwright.dev) | reading your site's design; capturing a web app | free |
 | [Maestro](https://maestro.mobile.dev) + Xcode or Android Studio | capturing an iOS or Android app on a simulator or emulator | free (Maestro Cloud is paid but not needed) |
 
-The skill and kit never call a paid service themselves; the agent only uses the ones you set up.
+The skill and kit call a paid service only when you set up its key; the agent uses only the ones you set up.
 
 ## Quickstart
 
@@ -163,6 +165,9 @@ point any agent at `skill/SKILL.md`, and ask for a video.
 |---|---|
 | `examples/glint-card` | Layer shaders and music on a beat: a card with a paper texture catching the light twice, to an ACE-Step track generated at 120 BPM; each glint and line of text lands on a beat (sync check under 1 frame). Renders in about 2.5 s. |
 | `examples/launch-linkedin` | The kestrel studio launch film for LinkedIn (4:5, 33 s), made with the skill end to end: the site's look read into `brand.json`, Playwright captures, a HyperFrames 3D unfold handed to kestrel, an ACE-Step track with every landing on a beat, and the postroll. |
+| `examples/kinetic-words` | Kinetic words: a Gemini TTS voice-over (`kit/voice.py`) lands in the frame one word at a time, on word times from whisper (`kit/words.py`). Key words are large and in the accent colour; each word comes into focus from a blur and leaves a faint echo. The film is in the folder: [`kinetic-words.mp4`](examples/kinetic-words/kinetic-words.mp4). |
+| `examples/text-ring` | A ring of letters turning in 3D around a title (`kit.words.ring`): the back of the ring passes behind the title, small, dim and mirrored; the front passes over it. Film: [`text-ring.mp4`](examples/text-ring/text-ring.mp4). |
+| `examples/behind-words` | Words behind the subject. *(The clip is not in git.)* An AI-generated speaker (a Flux 1.1 Pro still, animated by the Gemini TTS voice with OmniHuman 1.5, so the lips follow the words; `kit/replicate.py`) is cut out with `hyperframes remove-background`; the key words land behind her head, and a ring of words turns around it. Film: [`behind-words.mp4`](examples/behind-words/behind-words.mp4). |
 | `examples/chat-sorting` | *Showcase (inputs not in git).* A Sustain feature film: screen recordings of the real app, a HyperFrames intro, a transparent HyperFrames outro composited over kestrel layers, and the finish pass. |
 
 The people in the example photos are AI-generated (Flux 1.1 Pro on Replicate); no real person is
